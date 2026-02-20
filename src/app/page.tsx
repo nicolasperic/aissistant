@@ -1,65 +1,224 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useCallback, useEffect, useState } from "react";
+import { WeeklyOverview } from "@/components/dashboard/weekly-overview";
+import { GoalProgressChart } from "@/components/dashboard/goal-progress-chart";
+import { EventsCountdown } from "@/components/dashboard/events-countdown";
+import { StreakCard } from "@/components/dashboard/streak-card";
+import { QuickActions } from "@/components/dashboard/quick-actions";
+import { TaskList } from "@/components/tasks/task-list";
+import { TaskEditForm } from "@/components/tasks/task-edit-form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { startOfWeek, endOfWeek, startOfDay, endOfDay, format, isWednesday, isThursday, isFriday } from "date-fns";
+import { AlertCircle, Calendar, Sparkles } from "lucide-react";
+import type { Goal, Event, UserStats } from "@prisma/client";
+import type { TaskWithGoal } from "@/lib/types";
+
+export default function Dashboard() {
+  const [weeklyStats, setWeeklyStats] = useState({ completedTasks: 0, totalTasks: 0 });
+  const [todayTasks, setTodayTasks] = useState<TaskWithGoal[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [editingTask, setEditingTask] = useState<TaskWithGoal | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTodayTasks = useCallback(async () => {
+    const now = new Date();
+    const dayStart = startOfDay(now);
+    const dayEnd = endOfDay(now);
+    const res = await fetch(`/api/tasks?from=${dayStart.toISOString()}&to=${dayEnd.toISOString()}`);
+    const data = await res.json();
+    setTodayTasks(data);
+    return data as TaskWithGoal[];
+  }, []);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const now = new Date();
+        const ws = startOfWeek(now, { weekStartsOn: 1 });
+        const we = endOfWeek(now, { weekStartsOn: 1 });
+
+        const [tasksRes, goalsRes, eventsRes, rewardsRes, todayData] = await Promise.all([
+          fetch(`/api/tasks?from=${ws.toISOString()}&to=${we.toISOString()}`),
+          fetch("/api/goals"),
+          fetch("/api/events"),
+          fetch("/api/rewards"),
+          fetchTodayTasks(),
+        ]);
+
+        const tasks = await tasksRes.json();
+        const goalsData = await goalsRes.json();
+        const eventsData = await eventsRes.json();
+        const rewardsData = await rewardsRes.json();
+
+        setWeeklyStats({
+          completedTasks: tasks.filter((t: { status: string }) => t.status === "COMPLETED").length,
+          totalTasks: tasks.length,
+        });
+        setGoals(goalsData);
+        setEvents(eventsData);
+        setStats(rewardsData.stats);
+      } catch (error) {
+        console.error("Error loading dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [fetchTodayTasks]);
+
+  const handleStatusChange = async (id: string, status: string) => {
+    await fetch("/api/tasks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    await fetchTodayTasks();
+  };
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/tasks?id=${id}`, { method: "DELETE" });
+    setTodayTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleEditTask = async (data: { id: string; title: string; description: string; priority: string; scheduledDate: string; estimatedMinutes: string; goalId: string }) => {
+    await fetch("/api/tasks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: data.id,
+        title: data.title,
+        description: data.description || undefined,
+        priority: data.priority,
+        scheduledDate: data.scheduledDate || undefined,
+        estimatedMinutes: data.estimatedMinutes ? parseInt(data.estimatedMinutes) : undefined,
+        goalId: data.goalId || undefined,
+      }),
+    });
+    setEditingTask(null);
+    await fetchTodayTasks();
+  };
+
+  const today = new Date();
+  const showMidWeekCheckin = isWednesday(today) || isThursday(today);
+  const showEndOfWeekReview = isFriday(today);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-pulse text-muted-foreground">Loading dashboard...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">
+          {format(today, "EEEE, MMMM d, yyyy")}
+        </p>
+      </div>
+
+      {showMidWeekCheckin && (
+        <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30">
+          <CardContent className="flex items-center gap-3 p-4">
+            <Sparkles className="h-5 w-5 text-blue-500 shrink-0" />
+            <div>
+              <p className="font-medium text-sm">Mid-week check-in</p>
+              <p className="text-xs text-muted-foreground">How&apos;s your progress this week? Take a moment to review your tasks.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showEndOfWeekReview && (
+        <Card className="border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/30">
+          <CardContent className="flex items-center gap-3 p-4">
+            <AlertCircle className="h-5 w-5 text-purple-500 shrink-0" />
+            <div>
+              <p className="font-medium text-sm">Time to review your week!</p>
+              <p className="text-xs text-muted-foreground">Head over to the Review page to reflect on your progress and get AI feedback.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <WeeklyOverview
+          completedTasks={weeklyStats.completedTasks}
+          totalTasks={weeklyStats.totalTasks}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <StreakCard
+          currentStreak={stats?.currentStreak ?? 0}
+          longestStreak={stats?.longestStreak ?? 0}
+          totalPoints={stats?.totalPoints ?? 0}
+        />
+        <EventsCountdown events={events} />
+        <QuickActions />
+      </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-4">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">
+            {format(today, "EEEE, MMM d")} (Today)
+          </CardTitle>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {todayTasks.filter((t) => t.status === "COMPLETED").length}/{todayTasks.length} done
+          </span>
+        </CardHeader>
+        <CardContent>
+          <TaskList
+            tasks={todayTasks}
+            onStatusChange={handleStatusChange}
+            onEdit={setEditingTask}
+            onDelete={handleDelete}
+            emptyMessage="No tasks scheduled for today"
+          />
+        </CardContent>
+      </Card>
+
+      {editingTask && (
+        <TaskEditForm
+          task={editingTask}
+          goals={goals}
+          open={!!editingTask}
+          onOpenChange={(open) => { if (!open) setEditingTask(null); }}
+          onSubmit={handleEditTask}
+        />
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <GoalProgressChart goals={goals.filter((g: Goal) => g.progress < 100)} />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Active Goals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {goals.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">No goals yet</p>
+            ) : (
+              <div className="space-y-3">
+                {goals.filter((g: Goal) => g.progress < 100).slice(0, 5).map((goal: Goal) => (
+                  <div key={goal.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {goal.type.charAt(0)}
+                      </Badge>
+                      <span className="text-sm truncate">{goal.title}</span>
+                    </div>
+                    <span className="text-sm font-medium ml-2">{Math.round(goal.progress)}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

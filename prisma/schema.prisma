@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GoalType {
+  YEARLY
+  QUARTERLY
+  MONTHLY
+  WEEKLY
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Goal {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  type        GoalType
+  startDate   DateTime
+  endDate     DateTime
+  progress    Float     @default(0)
+  parentId    String?
+  parent      Goal?     @relation("GoalHierarchy", fields: [parentId], references: [id])
+  children    Goal[]    @relation("GoalHierarchy")
+  tasks       Task[]
+  category    String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Task {
+  id               String       @id @default(cuid())
+  title            String
+  description      String?
+  status           TaskStatus   @default(PENDING)
+  priority         TaskPriority @default(MEDIUM)
+  scheduledDate    DateTime?
+  completedAt      DateTime?
+  estimatedMinutes Int?
+  actualMinutes    Int?
+  goalId           String?
+  goal             Goal?        @relation(fields: [goalId], references: [id])
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  eventDate   DateTime
+  category    String?
+  url         String?
+  goalId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WeeklyReview {
+  id                String   @id @default(cuid())
+  weekStart         DateTime
+  weekEnd           DateTime
+  rating            Int?
+  completedTasks    Int      @default(0)
+  totalTasks        Int      @default(0)
+  studyMinutes      Int      @default(0)
+  userNotes         String?
+  aiAnalysis        String?
+  aiRecommendations String?
+  createdAt         DateTime @default(now())
+}
+
+model ProgressSnapshot {
+  id        String   @id @default(cuid())
+  date      DateTime
+  goalId    String
+  progress  Float
+  createdAt DateTime @default(now())
+}
+
+model Reward {
+  id          String   @id @default(cuid())
+  type        String
+  name        String
+  description String?
+  icon        String?
+  earnedAt    DateTime @default(now())
+  metadata    Json?
+}
+
+model UserStats {
+  id             String    @id @default("singleton")
+  totalPoints    Int       @default(0)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveDate DateTime?
+  updatedAt      DateTime  @updatedAt
+}
+
+model AiContext {
+  id        String   @id @default(cuid())
+  type      String
+  prompt    String
+  response  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
