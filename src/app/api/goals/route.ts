@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       tasks: true,
       parent: true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { position: "desc" },
   });
 
   return NextResponse.json(goals);
@@ -25,6 +25,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
+
+  const agg = await db.goal.aggregate({ _max: { position: true } });
+  const nextPosition = (agg._max.position ?? 0) + 1;
 
   const goal = await db.goal.create({
     data: {
@@ -36,6 +39,7 @@ export async function POST(req: NextRequest) {
       category: body.category,
       parentId: body.parentId || null,
       notes: body.notes || null,
+      position: nextPosition,
     },
     include: {
       children: true,

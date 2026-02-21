@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
         userNotes,
         aiAnalysis: aiResponse.analysis,
         aiRecommendations: aiResponse.recommendations,
+        aiHighlights: JSON.stringify(aiResponse.highlights ?? []),
+        aiAreasForImprovement: JSON.stringify(aiResponse.areasForImprovement ?? []),
       },
     });
 

@@ -14,9 +14,9 @@ export function AiFeedback({ feedback }: { feedback: AiReviewResponse }) {
           <CardTitle className="text-base">AI Analysis</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm dark:prose-invert max-w-none">
+          <div className="space-y-1.5">
             {feedback.analysis.split("\n").map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i} className="text-sm">{p}</p>
             ))}
           </div>
         </CardContent>
@@ -67,9 +67,9 @@ export function AiFeedback({ feedback }: { feedback: AiReviewResponse }) {
           <CardTitle className="text-sm">Recommendations</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm dark:prose-invert max-w-none">
+          <div className="space-y-1.5">
             {feedback.recommendations.split("\n").map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i} className="text-sm">{p}</p>
             ))}
           </div>
         </CardContent>

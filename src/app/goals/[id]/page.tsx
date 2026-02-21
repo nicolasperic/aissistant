@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,9 @@ export default function GoalDetailPage() {
   const [notes, setNotes] = useState("");
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
+  const [notesSaveError, setNotesSaveError] = useState(false);
+  // Only seed notes from DB on first load — never overwrite while user is editing
+  const notesInitialized = useRef(false);
 
   const loadData = useCallback(async () => {
     const [goalsRes, tasksRes] = await Promise.all([
@@ -39,7 +42,10 @@ export default function GoalDetailPage() {
     if (found) {
       setGoal(found);
       setProgress(found.progress);
-      setNotes(found.notes || "");
+      if (!notesInitialized.current) {
+        setNotes(found.notes || "");
+        notesInitialized.current = true;
+      }
     }
     setTasks(await tasksRes.json());
     setLoading(false);
@@ -100,17 +106,27 @@ export default function GoalDetailPage() {
   };
 
   const handleSaveNotes = async () => {
-    if (notes === (goal?.notes || "")) return;
+    if (!goal || notes === (goal.notes || "")) return;
     setNotesSaving(true);
     setNotesSaved(false);
-    await fetch("/api/goals", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: params.id, notes }),
-    });
-    setNotesSaving(false);
-    setNotesSaved(true);
-    setTimeout(() => setNotesSaved(false), 2500);
+    setNotesSaveError(false);
+    try {
+      const res = await fetch("/api/goals", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: goal.id, notes }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      // Keep local goal in sync so the guard works correctly on the next blur
+      setGoal({ ...goal, notes });
+      setNotesSaved(true);
+      setTimeout(() => setNotesSaved(false), 2500);
+    } catch {
+      setNotesSaveError(true);
+      setTimeout(() => setNotesSaveError(false), 3000);
+    } finally {
+      setNotesSaving(false);
+    }
   };
 
   if (loading || !goal) {
@@ -182,6 +198,9 @@ export default function GoalDetailPage() {
               )}
               {notesSaved && (
                 <span className="text-xs text-green-600 dark:text-green-400">Saved ✓</span>
+              )}
+              {notesSaveError && (
+                <span className="text-xs text-destructive">Save failed — try again</span>
               )}
               <span className="text-xs text-muted-foreground">
                 Used as context when generating AI plans

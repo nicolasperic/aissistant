@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
       userNotes: body.userNotes,
       aiAnalysis: body.aiAnalysis,
       aiRecommendations: body.aiRecommendations,
+      aiHighlights: body.aiHighlights,
+      aiAreasForImprovement: body.aiAreasForImprovement,
     },
   });
 
@@ -56,6 +58,8 @@ export async function PUT(req: NextRequest) {
       userNotes: body.userNotes,
       aiAnalysis: body.aiAnalysis,
       aiRecommendations: body.aiRecommendations,
+      aiHighlights: body.aiHighlights,
+      aiAreasForImprovement: body.aiAreasForImprovement,
     },
   });
 

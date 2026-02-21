@@ -238,6 +238,7 @@ export default function PlanPage() {
 
   return (
     <div className="space-y-6">
+      <div className="sticky -top-6 z-10 -mx-6 px-6 pt-6 pb-4 bg-background/95 backdrop-blur-sm border-b border-border/40">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -307,6 +308,7 @@ export default function PlanPage() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+      </div>
       </div>
 
       {/* Goal picker dialog */}

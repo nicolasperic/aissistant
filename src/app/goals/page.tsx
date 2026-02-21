@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { GoalCard } from "@/components/goals/goal-card";
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
+import { SortableGoalCard } from "@/components/goals/sortable-goal-card";
 import { GoalForm } from "@/components/goals/goal-form";
 import { GoalEditForm } from "@/components/goals/goal-edit-form";
 import { GoalHierarchy } from "@/components/goals/goal-hierarchy";
@@ -12,6 +20,13 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<GoalWithRelations[]>([]);
   const [editingGoal, setEditingGoal] = useState<GoalWithRelations | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "pending">("all");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const filteredGoals = filter === "pending" ? goals.filter((g) => g.progress < 100) : goals;
 
   const loadGoals = useCallback(async () => {
     const res = await fetch("/api/goals");
@@ -57,6 +72,42 @@ export default function GoalsPage() {
     loadGoals();
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = filteredGoals.findIndex((g) => g.id === active.id);
+    const newIndex = filteredGoals.findIndex((g) => g.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(filteredGoals, oldIndex, newIndex);
+
+    // Stable swap: reuse the position values already assigned to these visible goals
+    // (sorted DESC), re-assign them in the new visual order. Hidden goals are unaffected.
+    const sortedPositions = [...filteredGoals]
+      .map((g) => g.position)
+      .sort((a, b) => b - a);
+
+    const updates = reordered.map((goal, i) => ({
+      id: goal.id,
+      position: sortedPositions[i],
+    }));
+
+    // Optimistic update — no reload needed
+    setGoals((prev) => {
+      const positionMap = new Map(updates.map((u) => [u.id, u.position]));
+      return prev
+        .map((g) => (positionMap.has(g.id) ? { ...g, position: positionMap.get(g.id)! } : g))
+        .sort((a, b) => b.position - a.position);
+    });
+
+    await fetch("/api/goals/reorder", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ updates }),
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -65,9 +116,9 @@ export default function GoalsPage() {
     );
   }
 
-  // Build hierarchy map for children
+  // Build hierarchy map from filtered goals
   const goalMap = new Map<string, GoalWithRelations>();
-  goals.forEach((g) => goalMap.set(g.id, { ...g, children: [] }));
+  filteredGoals.forEach((g) => goalMap.set(g.id, { ...g, children: [] }));
   goalMap.forEach((g) => {
     if (g.parentId && goalMap.has(g.parentId)) {
       goalMap.get(g.parentId)!.children!.push(g);
@@ -89,20 +140,56 @@ export default function GoalsPage() {
       </div>
 
       <Tabs defaultValue="cards">
-        <TabsList>
-          <TabsTrigger value="cards">Cards</TabsTrigger>
-          <TabsTrigger value="hierarchy">Hierarchy</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center gap-3">
+          <TabsList>
+            <TabsTrigger value="cards">Cards</TabsTrigger>
+            <TabsTrigger value="hierarchy">Hierarchy</TabsTrigger>
+          </TabsList>
+
+          <div className="inline-flex h-9 items-center rounded-lg bg-muted p-1 text-muted-foreground">
+            <button
+              onClick={() => setFilter("all")}
+              className={`inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium transition-all ${
+                filter === "all"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "hover:text-foreground"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilter("pending")}
+              className={`inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium transition-all ${
+                filter === "pending"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "hover:text-foreground"
+              }`}
+            >
+              Pending
+            </button>
+          </div>
+        </div>
 
         <TabsContent value="cards" className="mt-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {goals.map((goal) => (
-              <GoalCard key={goal.id} goal={goal} onEdit={setEditingGoal} onDelete={handleDelete} />
-            ))}
-          </div>
-          {goals.length === 0 && (
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <SortableContext items={filteredGoals.map((g) => g.id)} strategy={rectSortingStrategy}>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredGoals.map((goal) => (
+                  <SortableGoalCard
+                    key={goal.id}
+                    goal={goal}
+                    onEdit={setEditingGoal}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+          {filteredGoals.length === 0 && (
             <p className="py-12 text-center text-muted-foreground">
-              No goals yet. Create your first goal to get started!
+              {filter === "pending"
+                ? "All goals are complete. Great work!"
+                : "No goals yet. Create your first goal to get started!"}
             </p>
           )}
         </TabsContent>

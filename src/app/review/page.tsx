@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { WeekRating } from "@/components/review/week-rating";
 import { AiFeedback } from "@/components/review/ai-feedback";
-import { Sparkles, Loader2, CheckCircle2, Circle } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle2, Circle, ChevronDown } from "lucide-react";
 import { startOfWeek, endOfWeek, format } from "date-fns";
 import type { AiReviewResponse } from "@/lib/types";
 import type { WeeklyReview } from "@prisma/client";
@@ -21,6 +21,7 @@ export default function ReviewPage() {
   const [aiFeedback, setAiFeedback] = useState<AiReviewResponse | null>(null);
   const [weekStats, setWeekStats] = useState({ completed: 0, total: 0 });
   const [pastReviews, setPastReviews] = useState<WeeklyReview[]>([]);
+  const [expandedReviewId, setExpandedReviewId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -182,31 +183,67 @@ export default function ReviewPage() {
             <CardTitle className="text-base">Past Reviews</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {pastReviews.map((review) => (
-                <div key={review.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">
-                      Week of {format(new Date(review.weekStart), "MMM d, yyyy")}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {review.completedTasks}/{review.totalTasks} tasks | {review.studyMinutes} study min
-                    </p>
+            <div className="space-y-1">
+              {pastReviews.map((review) => {
+                const isExpanded = expandedReviewId === review.id;
+                const hasAi = !!(review.aiAnalysis || review.aiRecommendations);
+                const hasContent = !!(review.userNotes || hasAi);
+                const aiFeedbackForReview: AiReviewResponse | null = hasAi ? {
+                  analysis: review.aiAnalysis ?? "",
+                  recommendations: review.aiRecommendations ?? "",
+                  highlights: review.aiHighlights ? JSON.parse(review.aiHighlights) : [],
+                  areasForImprovement: review.aiAreasForImprovement ? JSON.parse(review.aiAreasForImprovement) : [],
+                } : null;
+
+                return (
+                  <div key={review.id} className="border-b last:border-0">
+                    <button
+                      className={`w-full flex items-center justify-between py-3 text-left transition-colors ${hasContent ? "hover:bg-muted/40 cursor-pointer rounded-sm px-2 -mx-2" : "cursor-default"}`}
+                      onClick={() => hasContent && setExpandedReviewId(isExpanded ? null : review.id)}
+                    >
+                      <div>
+                        <p className="text-sm font-medium">
+                          Week of {format(new Date(review.weekStart), "MMM d, yyyy")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {review.completedTasks}/{review.totalTasks} tasks · {review.studyMinutes} study min
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span
+                              key={i}
+                              className={`text-sm ${i < (review.rating ?? 0) ? "text-yellow-400" : "text-muted-foreground/20"}`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                        {hasContent && (
+                          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                        )}
+                      </div>
+                    </button>
+
+                    {hasContent && (
+                      <div className={`grid transition-all duration-200 ease-in-out ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                        <div className="overflow-hidden">
+                          <div className="pb-4 pt-2 space-y-4">
+                            {review.userNotes && (
+                              <div className="rounded-md bg-muted/50 px-3 py-2.5">
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Your notes</p>
+                                <p className="text-sm whitespace-pre-wrap">{review.userNotes}</p>
+                              </div>
+                            )}
+                            {aiFeedbackForReview && <AiFeedback feedback={aiFeedbackForReview} />}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <span
-                        key={i}
-                        className={`text-sm ${
-                          i < (review.rating ?? 0) ? "text-yellow-400" : "text-muted-foreground/20"
-                        }`}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
