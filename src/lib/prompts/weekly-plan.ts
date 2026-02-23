@@ -11,7 +11,7 @@ export function buildPlanPrompt(context: {
   planEnd: string;
 }): string {
   const isMonthly = context.rangeType === "monthly";
-  const rangeLabel = isMonthly ? "monthly (4-week)" : "weekly";
+  const rangeLabel = isMonthly ? "multi-week" : "weekly";
 
   const yearlyGoals = context.allGoals.filter((g) => g.type === "YEARLY");
   const quarterlyGoals = context.allGoals.filter((g) => g.type === "QUARTERLY");
@@ -66,12 +66,22 @@ Create a ${rangeLabel} plan with daily tasks from ${context.planStart} to ${cont
 
 ${context.focusGoals.length > 0 ? `IMPORTANT: The user has selected specific focus goals. Heavily prioritize tasks that advance these goals. At least 70% of tasks should relate to the focus goals.` : ""}
 
+First, provide weeklyGoals — containers that organize tasks into themed weeks:
+- weekKey: Short identifier like "week1", "week2" (used to link tasks)
+- title: Descriptive title like "Week 1 — Magento Architecture & Theming"
+- description: 1-2 sentence overview of that week's focus
+- startDate: ISO date of the Monday starting that week
+- endDate: ISO date of the Sunday ending that week
+- parentGoalId: ID of the most relevant focus goal from the hierarchy above, or null
+For a weekly plan create 1 weekly goal. For a monthly plan create one per week (up to 4).
+
 For each task, provide:
 - title: Clear, actionable task title
-- description: Brief description (optional)
+- description: Detailed description with specific subtopics, key concepts, and actionable guidance. For study tasks: include bullet points of what to learn, specific tools/commands/concepts covered, and any key angle to focus on (e.g. exam relevance, practical application). Do NOT leave this empty for study or work tasks.
 - priority: LOW, MEDIUM, HIGH, or CRITICAL
 - scheduledDate: ISO date string (YYYY-MM-DD) — must be within ${context.planStart} to ${context.planEnd}
 - estimatedMinutes: Estimated time in minutes
+- weekKey: The weekKey of the weekly goal this task belongs to
 
 Also provide:
 - summary: A 2-3 sentence overview of the ${rangeLabel} focus
@@ -79,7 +89,8 @@ Also provide:
 
 Respond in JSON format:
 {
-  "tasks": [{ "title": "...", "description": "...", "priority": "MEDIUM", "scheduledDate": "2026-02-10", "estimatedMinutes": 60 }],
+  "weeklyGoals": [{ "weekKey": "week1", "title": "Week 1 — ...", "description": "...", "startDate": "2026-02-23", "endDate": "2026-03-01", "parentGoalId": "goal_cuid_or_null" }],
+  "tasks": [{ "title": "...", "description": "...", "priority": "MEDIUM", "scheduledDate": "2026-02-24", "estimatedMinutes": 60, "weekKey": "week1" }],
   "summary": "...",
   "focusAreas": ["..."]
 }`;

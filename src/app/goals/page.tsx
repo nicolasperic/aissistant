@@ -15,12 +15,14 @@ import { GoalEditForm } from "@/components/goals/goal-edit-form";
 import { GoalHierarchy } from "@/components/goals/goal-hierarchy";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { GoalWithRelations } from "@/lib/types";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 export default function GoalsPage() {
   const [goals, setGoals] = useState<GoalWithRelations[]>([]);
   const [editingGoal, setEditingGoal] = useState<GoalWithRelations | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "pending">("all");
+  const [filter, setFilter] = useLocalStorage<"all" | "pending">("goals-filter", "all");
+  const [goalsTab, setGoalsTab] = useLocalStorage<string>("goals-tab", "cards");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -139,7 +141,7 @@ export default function GoalsPage() {
         />
       </div>
 
-      <Tabs defaultValue="cards">
+      <Tabs value={goalsTab} onValueChange={setGoalsTab}>
         <div className="flex items-center gap-3">
           <TabsList>
             <TabsTrigger value="cards">Cards</TabsTrigger>

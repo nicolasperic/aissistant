@@ -15,6 +15,7 @@ enum GoalType {
 }
 
 enum TaskStatus {
+  DRAFT
   PENDING
   IN_PROGRESS
   COMPLETED

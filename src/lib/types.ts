@@ -10,16 +10,27 @@ export type TaskWithGoal = Task & {
   goal?: Goal | null;
 };
 
+export type WeeklyGoalDraft = {
+  weekKey: string;       // temporary key e.g. "week1", "week2"
+  title: string;         // e.g. "Week 1 — Architecture & Theming"
+  description?: string;
+  startDate: string;     // ISO date (Monday of that week)
+  endDate: string;       // ISO date (Sunday of that week)
+  parentGoalId?: string; // optional reference to a focus goal ID
+};
+
 export type WeeklyPlanTask = {
   title: string;
   description?: string;
   priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   scheduledDate: string;
   estimatedMinutes?: number;
-  goalId?: string;
+  weekKey?: string;  // references WeeklyGoalDraft.weekKey
+  goalId?: string;   // fallback direct goal ID
 };
 
 export type AiWeeklyPlan = {
+  weeklyGoals: WeeklyGoalDraft[];
   tasks: WeeklyPlanTask[];
   summary: string;
   focusAreas: string[];

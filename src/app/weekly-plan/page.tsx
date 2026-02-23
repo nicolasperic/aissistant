@@ -19,6 +19,7 @@ import {
 import { TaskList } from "@/components/tasks/task-list";
 import { TaskForm } from "@/components/tasks/task-form";
 import { TaskEditForm } from "@/components/tasks/task-edit-form";
+import { DraftReviewModal } from "@/components/tasks/draft-review-modal";
 import {
   Sparkles,
   Loader2,
@@ -27,6 +28,7 @@ import {
   CalendarRange,
   Calendar,
   Check,
+  ClipboardList,
 } from "lucide-react";
 import {
   startOfWeek,
@@ -41,6 +43,7 @@ import {
 } from "date-fns";
 import type { TaskWithGoal } from "@/lib/types";
 import type { Goal } from "@prisma/client";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 type RangeType = "weekly" | "monthly";
 type ViewScope = "week" | "month";
@@ -54,13 +57,19 @@ export default function PlanPage() {
   const [editingTask, setEditingTask] = useState<TaskWithGoal | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // View scope (independent of plan generation)
-  const [viewScope, setViewScope] = useState<ViewScope>("week");
+  // View scope (independent of plan generation) — persisted
+  const [viewScope, setViewScope] = useLocalStorage<ViewScope>("plan-view-scope", "week");
+
+  // Draft tasks
+  const [draftTasks, setDraftTasks] = useState<TaskWithGoal[]>([]);
+  const [showDraftReview, setShowDraftReview] = useState(false);
 
   // Plan generation configuration
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [selectedGoalIds, setSelectedGoalIds] = useState<Set<string>>(new Set());
   const [pendingRangeType, setPendingRangeType] = useState<RangeType>("weekly");
+  const [planStartDate, setPlanStartDate] = useState<string>("");
+  const [planEndDate, setPlanEndDate] = useState<string>("");
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
@@ -68,14 +77,17 @@ export default function PlanPage() {
 
   // Always fetch the full 4-week range so scope toggle is instant
   const loadTasks = useCallback(async () => {
-    const [tasksRes, goalsRes] = await Promise.all([
+    const [tasksRes, goalsRes, draftsRes] = await Promise.all([
       fetch(
         `/api/tasks?from=${weekStart.toISOString()}&to=${monthEnd.toISOString()}`
       ),
       fetch("/api/goals"),
+      fetch("/api/tasks?status=DRAFT"),
     ]);
-    setTasks(await tasksRes.json());
+    const allTasks: TaskWithGoal[] = await tasksRes.json();
+    setTasks(allTasks.filter((t) => t.status !== "DRAFT"));
     setGoals(await goalsRes.json());
+    setDraftTasks(await draftsRes.json());
     setLoading(false);
   }, []);
 
@@ -86,13 +98,13 @@ export default function PlanPage() {
 
   const handleRequestGenerate = (type: RangeType) => {
     setPendingRangeType(type);
+    setPlanStartDate(format(weekStart, "yyyy-MM-dd"));
+    setPlanEndDate(format(type === "monthly" ? monthEnd : weekEnd, "yyyy-MM-dd"));
     setShowGoalPicker(true);
   };
 
   const handleGenerate = async () => {
     setShowGoalPicker(false);
-    // Switch view to match what was generated
-    setViewScope(pendingRangeType === "monthly" ? "month" : "week");
     setGenerating(true);
 
     try {
@@ -100,13 +112,12 @@ export default function PlanPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          rangeType: pendingRangeType,
-          weekStart: weekStart.toISOString(),
-          planStart: weekStart.toISOString(),
-          planEnd:
-            pendingRangeType === "monthly"
-              ? monthEnd.toISOString()
-              : weekEnd.toISOString(),
+          planStart: planStartDate
+            ? new Date(planStartDate).toISOString()
+            : weekStart.toISOString(),
+          planEnd: planEndDate
+            ? new Date(planEndDate).toISOString()
+            : weekEnd.toISOString(),
           goalIds: Array.from(selectedGoalIds),
         }),
       });
@@ -116,7 +127,8 @@ export default function PlanPage() {
       const data = await res.json();
       setPlanSummary(data.plan.summary);
       setFocusAreas(data.plan.focusAreas || []);
-      loadTasks();
+      await loadTasks();
+      setShowDraftReview(true);
     } catch (error) {
       console.error("Error generating plan:", error);
       alert(
@@ -181,6 +193,22 @@ export default function PlanPage() {
     setEditingTask(null);
     loadTasks();
   };
+
+  // Goals with progress >= 100, plus any children of those (regardless of child progress)
+  const activeGoals = useMemo(() => {
+    const hidden = new Set(goals.filter((g) => g.progress >= 100).map((g) => g.id));
+    let changed = true;
+    while (changed) {
+      changed = false;
+      goals.forEach((g) => {
+        if (!hidden.has(g.id) && g.parentId && hidden.has(g.parentId)) {
+          hidden.add(g.id);
+          changed = true;
+        }
+      });
+    }
+    return goals.filter((g) => !hidden.has(g.id));
+  }, [goals]);
 
   // Filter tasks based on current view scope
   const visibleTasks = useMemo(() => {
@@ -276,7 +304,18 @@ export default function PlanPage() {
             </span>
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {draftTasks.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDraftReview(true)}
+              className="border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
+            >
+              <ClipboardList className="mr-1.5 h-3.5 w-3.5" />
+              Review {draftTasks.length} draft{draftTasks.length !== 1 ? "s" : ""}
+            </Button>
+          )}
           <TaskForm goals={goals} onSubmit={handleCreateTask} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -322,14 +361,27 @@ export default function PlanPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium mb-1">Planning period</p>
-              <p className="text-sm text-muted-foreground">
-                {format(weekStart, "MMM d")} -{" "}
-                {format(
-                  pendingRangeType === "monthly" ? monthEnd : weekEnd,
-                  "MMM d, yyyy"
-                )}
-              </p>
+              <p className="text-sm font-medium mb-2">Planning period</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Start date</label>
+                  <input
+                    type="date"
+                    value={planStartDate}
+                    onChange={(e) => setPlanStartDate(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">End date</label>
+                  <input
+                    type="date"
+                    value={planEndDate}
+                    onChange={(e) => setPlanEndDate(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
+              </div>
             </div>
             <div>
               <p className="text-sm font-medium mb-2">
@@ -339,7 +391,7 @@ export default function PlanPage() {
                 </span>
               </p>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {goals.map((goal) => {
+                {activeGoals.map((goal) => {
                   const isSelected = selectedGoalIds.has(goal.id);
                   return (
                     <button
@@ -381,9 +433,9 @@ export default function PlanPage() {
                     </button>
                   );
                 })}
-                {goals.length === 0 && (
+                {activeGoals.length === 0 && (
                   <p className="py-4 text-center text-sm text-muted-foreground">
-                    No goals yet. The AI will create a general plan.
+                    {goals.length === 0 ? "No goals yet." : "All goals are completed."} The AI will create a general plan.
                   </p>
                 )}
               </div>
@@ -609,6 +661,15 @@ export default function PlanPage() {
             if (!open) setEditingTask(null);
           }}
           onSubmit={handleEditTask}
+        />
+      )}
+
+      {showDraftReview && draftTasks.length > 0 && (
+        <DraftReviewModal
+          tasks={draftTasks}
+          goals={goals}
+          onClose={() => setShowDraftReview(false)}
+          onRefresh={loadTasks}
         />
       )}
     </div>

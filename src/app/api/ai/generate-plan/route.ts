@@ -2,33 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { generateJsonCompletion } from "@/lib/ai";
 import { buildPlanPrompt } from "@/lib/prompts/weekly-plan";
-import { startOfWeek, endOfWeek, addWeeks } from "date-fns";
+import { startOfWeek, endOfWeek } from "date-fns";
 import type { AiWeeklyPlan } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const rangeType: "weekly" | "monthly" = body.rangeType || "weekly";
     const goalIds: string[] = body.goalIds || [];
 
-    // Compute date range
+    // Compute date range — always use explicit planStart/planEnd when provided
     const now = new Date();
     let planStart: Date;
     let planEnd: Date;
 
-    if (rangeType === "monthly") {
-      planStart = body.planStart
-        ? new Date(body.planStart)
-        : startOfWeek(now, { weekStartsOn: 1 });
-      planEnd = body.planEnd
-        ? new Date(body.planEnd)
-        : endOfWeek(addWeeks(planStart, 3), { weekStartsOn: 1 });
+    if (body.planStart && body.planEnd) {
+      planStart = new Date(body.planStart);
+      planEnd = new Date(body.planEnd);
+    } else if (body.weekStart) {
+      planStart = new Date(body.weekStart);
+      planEnd = endOfWeek(planStart, { weekStartsOn: 1 });
     } else {
-      planStart = body.weekStart
-        ? new Date(body.weekStart)
-        : startOfWeek(now, { weekStartsOn: 1 });
+      planStart = startOfWeek(now, { weekStartsOn: 1 });
       planEnd = endOfWeek(planStart, { weekStartsOn: 1 });
     }
+
+    // Auto-detect rangeType from the date span
+    const daySpan = Math.round((planEnd.getTime() - planStart.getTime()) / (1000 * 60 * 60 * 24));
+    const rangeType: "weekly" | "monthly" = daySpan <= 7 ? "weekly" : "monthly";
 
     const planEndBuffer = new Date(planEnd.getTime() + 14 * 24 * 60 * 60 * 1000);
 
@@ -67,20 +67,44 @@ export async function POST(req: NextRequest) {
       `Generate a ${rangeType} plan from ${planStartStr} to ${planEndStr}. Today is ${now.toISOString().split("T")[0]}.${focusGoals.length > 0 ? ` Focus on: ${focusGoals.map((g) => g.title).join(", ")}.` : ""}`
     );
 
-    // Save generated tasks to DB
+    // Create weekly goal containers first, build weekKey → DB id map
+    const weeklyGoalMap = new Map<string, string>();
+    if (plan.weeklyGoals?.length > 0) {
+      for (const wg of plan.weeklyGoals) {
+        const created = await db.goal.create({
+          data: {
+            title: wg.title,
+            description: wg.description,
+            type: "WEEKLY",
+            startDate: new Date(wg.startDate),
+            endDate: new Date(wg.endDate),
+            parentId: wg.parentGoalId || null,
+            progress: 0,
+            category: focusGoals[0]?.category ?? null,
+          },
+        });
+        weeklyGoalMap.set(wg.weekKey, created.id);
+      }
+    }
+
+    // Save generated tasks to DB, linking to weekly goals via weekKey
     const createdTasks = await Promise.all(
-      plan.tasks.map((task) =>
-        db.task.create({
+      plan.tasks.map((task) => {
+        const goalId = task.weekKey
+          ? (weeklyGoalMap.get(task.weekKey) ?? task.goalId ?? null)
+          : (task.goalId ?? null);
+        return db.task.create({
           data: {
             title: task.title,
             description: task.description,
             priority: task.priority,
             scheduledDate: new Date(task.scheduledDate),
             estimatedMinutes: task.estimatedMinutes,
-            goalId: task.goalId || null,
+            goalId,
+            status: "DRAFT",
           },
-        })
-      )
+        });
+      })
     );
 
     // Save AI context
