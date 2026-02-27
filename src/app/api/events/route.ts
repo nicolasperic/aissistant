@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const searchParams = req.nextUrl.searchParams;
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+
+  const where: Record<string, unknown> = {};
+  if (from || to) {
+    where.eventDate = {};
+    if (from) (where.eventDate as Record<string, unknown>).gte = new Date(from);
+    if (to) (where.eventDate as Record<string, unknown>).lte = new Date(to);
+  }
+
   const events = await db.event.findMany({
+    where,
     orderBy: { eventDate: "asc" },
   });
 
