@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { parseDateOnly } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     data: {
       title: body.title,
       description: body.description,
-      eventDate: new Date(body.eventDate),
+      eventDate: parseDateOnly(body.eventDate),
       category: body.category,
       url: body.url,
       goalId: body.goalId || null,
@@ -46,7 +47,7 @@ export async function PUT(req: NextRequest) {
     data: {
       title: body.title,
       description: body.description,
-      eventDate: body.eventDate ? new Date(body.eventDate) : undefined,
+      eventDate: body.eventDate ? parseDateOnly(body.eventDate) : undefined,
       category: body.category,
       url: body.url,
       goalId: body.goalId,

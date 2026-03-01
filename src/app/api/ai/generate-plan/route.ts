@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { generateJsonCompletion } from "@/lib/ai";
 import { buildPlanPrompt } from "@/lib/prompts/weekly-plan";
 import { startOfWeek, endOfWeek } from "date-fns";
+import { parseDateOnly } from "@/lib/utils";
 import type { AiWeeklyPlan } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
@@ -76,8 +77,8 @@ export async function POST(req: NextRequest) {
             title: wg.title,
             description: wg.description,
             type: "WEEKLY",
-            startDate: new Date(wg.startDate),
-            endDate: new Date(wg.endDate),
+            startDate: parseDateOnly(wg.startDate),
+            endDate: parseDateOnly(wg.endDate),
             parentId: wg.parentGoalId || null,
             progress: 0,
             category: focusGoals[0]?.category ?? null,
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
             title: task.title,
             description: task.description,
             priority: task.priority,
-            scheduledDate: new Date(task.scheduledDate),
+            scheduledDate: parseDateOnly(task.scheduledDate),
             estimatedMinutes: task.estimatedMinutes,
             goalId,
             status: "DRAFT",

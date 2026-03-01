@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { onTaskCompleted, awardPoints, POINTS } from "@/lib/rewards";
+import { parseDateOnly } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
       title: body.title,
       description: body.description,
       priority: body.priority || "MEDIUM",
-      scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : null,
+      scheduledDate: body.scheduledDate ? parseDateOnly(body.scheduledDate) : null,
       estimatedMinutes: body.estimatedMinutes,
       goalId: body.goalId || null,
     },
@@ -61,7 +62,7 @@ export async function PUT(req: NextRequest) {
   if (body.description !== undefined) data.description = body.description;
   if (body.status !== undefined) data.status = body.status;
   if (body.priority !== undefined) data.priority = body.priority;
-  if (body.scheduledDate !== undefined) data.scheduledDate = body.scheduledDate ? new Date(body.scheduledDate) : null;
+  if (body.scheduledDate !== undefined) data.scheduledDate = body.scheduledDate ? parseDateOnly(body.scheduledDate) : null;
   if (body.estimatedMinutes !== undefined) data.estimatedMinutes = body.estimatedMinutes;
   if (body.actualMinutes !== undefined) data.actualMinutes = body.actualMinutes;
   if (body.goalId !== undefined) data.goalId = body.goalId || null;
