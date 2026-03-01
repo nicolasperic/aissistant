@@ -8,6 +8,8 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status");
   const from = searchParams.get("from");
   const to = searchParams.get("to");
+  const completedFrom = searchParams.get("completedFrom");
+  const completedTo = searchParams.get("completedTo");
 
   const where: Record<string, unknown> = {};
   if (goalId) where.goalId = goalId;
@@ -16,6 +18,11 @@ export async function GET(req: NextRequest) {
     where.scheduledDate = {};
     if (from) (where.scheduledDate as Record<string, unknown>).gte = new Date(from);
     if (to) (where.scheduledDate as Record<string, unknown>).lte = new Date(to);
+  }
+  if (completedFrom || completedTo) {
+    where.completedAt = {};
+    if (completedFrom) (where.completedAt as Record<string, unknown>).gte = new Date(completedFrom);
+    if (completedTo) (where.completedAt as Record<string, unknown>).lte = new Date(completedTo);
   }
 
   const tasks = await db.task.findMany({
@@ -58,6 +65,10 @@ export async function PUT(req: NextRequest) {
   if (body.estimatedMinutes !== undefined) data.estimatedMinutes = body.estimatedMinutes;
   if (body.actualMinutes !== undefined) data.actualMinutes = body.actualMinutes;
   if (body.goalId !== undefined) data.goalId = body.goalId || null;
+
+  if (body.status !== "COMPLETED" && previousTask?.status === "COMPLETED") {
+    data.completedAt = null;
+  }
 
   if (body.status === "COMPLETED" && previousTask?.status !== "COMPLETED") {
     data.completedAt = new Date();

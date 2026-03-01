@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         db.task.findMany({
           where: {
             status: "COMPLETED",
-            scheduledDate: { gte: wsDate, lte: weDate },
+            completedAt: { gte: wsDate, lte: weDate },
           },
         }),
         db.task.findMany({

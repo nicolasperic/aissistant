@@ -24,21 +24,23 @@ export default function ReviewPage() {
   const [expandedReviewId, setExpandedReviewId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 6 });
+  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 6 });
 
   const loadData = useCallback(async () => {
-    const [tasksRes, reviewsRes] = await Promise.all([
+    const [scheduledRes, completedRes, reviewsRes] = await Promise.all([
       fetch(`/api/tasks?from=${weekStart.toISOString()}&to=${weekEnd.toISOString()}`),
+      fetch(`/api/tasks?completedFrom=${weekStart.toISOString()}&completedTo=${weekEnd.toISOString()}`),
       fetch("/api/reviews?limit=5"),
     ]);
 
-    const tasks = await tasksRes.json();
+    const scheduledTasks = await scheduledRes.json();
+    const completedTasks = await completedRes.json();
     const reviews = await reviewsRes.json();
 
     setWeekStats({
-      completed: tasks.filter((t: { status: string }) => t.status === "COMPLETED").length,
-      total: tasks.length,
+      completed: completedTasks.length,
+      total: scheduledTasks.length,
     });
     setPastReviews(reviews);
     setLoading(false);
