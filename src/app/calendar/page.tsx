@@ -23,6 +23,17 @@ import {
   Circle,
   ExternalLink,
 } from "lucide-react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  useDraggable,
+  useDroppable,
+  PointerSensor,
+  useSensors,
+  useSensor,
+} from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -45,12 +56,64 @@ const PRIORITY_TEXT: Record<string, string> = {
 const DAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_VISIBLE_PER_DAY = 3;
 
+function DraggableChip({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className="touch-none"
+      style={{ opacity: isDragging ? 0 : 1 }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DroppableDay({
+  dayId,
+  className,
+  onClick,
+  children,
+}: {
+  dayId: string;
+  className?: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: dayId });
+  return (
+    <div
+      ref={setNodeRef}
+      onClick={onClick}
+      className={cn(
+        className,
+        isOver && "ring-2 ring-inset ring-primary bg-primary/10"
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [tasks, setTasks] = useState<TaskWithGoal[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   // Full grid range: Sunday before month start → Saturday after month end
   const calendarDays = useMemo(() => {
@@ -109,6 +172,66 @@ export default function CalendarPage() {
     setSelectedDay(new Date());
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeStr = active.id as string;
+    const overStr = over.id as string;
+    if (!overStr.startsWith("day:")) return;
+
+    const [type, itemId] = activeStr.split(":");
+    const targetDate = new Date(overStr.replace("day:", ""));
+
+    if (type === "task") {
+      const task = tasks.find((t) => t.id === itemId);
+      if (!task) return;
+      if (task.scheduledDate && isSameDay(new Date(task.scheduledDate), targetDate)) return;
+
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === itemId
+            ? { ...t, scheduledDate: targetDate.toISOString() }
+            : t
+        )
+      );
+      await fetch("/api/tasks", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: itemId, scheduledDate: targetDate.toISOString() }),
+      });
+    } else if (type === "event") {
+      const ev = events.find((e) => e.id === itemId);
+      if (!ev) return;
+      if (isSameDay(new Date(ev.eventDate), targetDate)) return;
+
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === itemId
+            ? { ...e, eventDate: targetDate.toISOString() }
+            : e
+        )
+      );
+      await fetch("/api/events", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: itemId, eventDate: targetDate.toISOString() }),
+      });
+    }
+  };
+
+  const activeTask = activeId?.startsWith("task:")
+    ? tasks.find((t) => t.id === activeId.replace("task:", ""))
+    : null;
+  const activeEvent = activeId?.startsWith("event:")
+    ? events.find((e) => e.id === activeId.replace("event:", ""))
+    : null;
+
   return (
     <div className="flex h-full flex-col gap-4">
       {/* Header */}
@@ -144,132 +267,176 @@ export default function CalendarPage() {
       {/* Main content */}
       <div className="flex flex-1 min-h-0 flex-col lg:flex-row gap-4">
         {/* Calendar grid */}
-        <div
-          className={cn(
-            "flex flex-1 min-w-0 flex-col transition-opacity",
-            loading && "opacity-50 pointer-events-none"
-          )}
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
         >
-          {/* Day-of-week headers */}
-          <div className="grid grid-cols-7 border-b border-border">
-            {DAY_HEADERS.map((d) => (
-              <div
-                key={d}
-                className="py-2 text-center text-xs font-medium text-muted-foreground"
-              >
-                {d}
-              </div>
-            ))}
-          </div>
-
-          {/* Grid cells */}
-          <div className="grid grid-cols-7 border-l border-t border-border flex-1">
-            {calendarDays.map((day) => {
-              const dayTasks = getTasksForDay(day);
-              const dayEvents = getEventsForDay(day);
-              const isCurrentMonth = isSameMonth(day, currentMonth);
-              const isSelected = isSameDay(day, selectedDay);
-              const isTodayDay = isToday(day);
-
-              const eventsSlice = dayEvents.slice(0, MAX_VISIBLE_PER_DAY);
-              const tasksSlice = dayTasks.slice(
-                0,
-                MAX_VISIBLE_PER_DAY - eventsSlice.length
-              );
-              const overflow =
-                dayTasks.length +
-                dayEvents.length -
-                eventsSlice.length -
-                tasksSlice.length;
-              const completedCount = dayTasks.filter(
-                (t) => t.status === "COMPLETED"
-              ).length;
-
-              return (
-                <button
-                  key={day.toISOString()}
-                  onClick={() => setSelectedDay(day)}
-                  className={cn(
-                    "min-h-[110px] border-b border-r border-border p-1.5 text-left",
-                    "flex flex-col gap-0.5 transition-colors hover:bg-muted/30",
-                    !isCurrentMonth && "bg-muted/10",
-                    isSelected && "bg-primary/5 ring-1 ring-inset ring-primary/30"
-                  )}
+          <div
+            className={cn(
+              "flex flex-1 min-w-0 flex-col transition-opacity",
+              loading && "opacity-50 pointer-events-none"
+            )}
+          >
+            {/* Day-of-week headers */}
+            <div className="grid grid-cols-7 border-b border-border">
+              {DAY_HEADERS.map((d) => (
+                <div
+                  key={d}
+                  className="py-2 text-center text-xs font-medium text-muted-foreground"
                 >
-                  {/* Date number */}
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span
-                      className={cn(
-                        "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
-                        isTodayDay
-                          ? "bg-primary text-primary-foreground"
-                          : !isCurrentMonth
-                          ? "text-muted-foreground"
-                          : "text-foreground"
-                      )}
-                    >
-                      {format(day, "d")}
-                    </span>
-                    {dayTasks.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground pr-0.5">
-                        {completedCount}/{dayTasks.length}
-                      </span>
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            {/* Grid cells */}
+            <div className="grid grid-cols-7 border-l border-t border-border flex-1">
+              {calendarDays.map((day) => {
+                const dayTasks = getTasksForDay(day);
+                const dayEvents = getEventsForDay(day);
+                const isCurrentMonth = isSameMonth(day, currentMonth);
+                const isSelected = isSameDay(day, selectedDay);
+                const isTodayDay = isToday(day);
+
+                const dayId = `day:${day.toISOString()}`;
+
+                const eventsSlice = dayEvents.slice(0, MAX_VISIBLE_PER_DAY);
+                const tasksSlice = dayTasks.slice(
+                  0,
+                  MAX_VISIBLE_PER_DAY - eventsSlice.length
+                );
+                const overflow =
+                  dayTasks.length +
+                  dayEvents.length -
+                  eventsSlice.length -
+                  tasksSlice.length;
+                const completedCount = dayTasks.filter(
+                  (t) => t.status === "COMPLETED"
+                ).length;
+
+                return (
+                  <DroppableDay
+                    key={day.toISOString()}
+                    dayId={dayId}
+                    onClick={() => setSelectedDay(day)}
+                    className={cn(
+                      "min-h-[110px] border-b border-r border-border p-1.5 text-left",
+                      "flex flex-col gap-0.5 transition-colors hover:bg-muted/30 cursor-pointer",
+                      !isCurrentMonth && "bg-muted/10",
+                      isSelected && "bg-primary/5 ring-1 ring-inset ring-primary/30"
                     )}
-                  </div>
-
-                  {/* Events */}
-                  {eventsSlice.map((event) => (
-                    <div
-                      key={event.id}
-                      className="flex items-center gap-1 rounded px-1 py-0.5 bg-violet-100 dark:bg-violet-900/30 truncate"
-                    >
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
-                      <span className="truncate text-[11px] text-violet-800 dark:text-violet-300">
-                        {event.title}
-                      </span>
-                    </div>
-                  ))}
-
-                  {/* Tasks */}
-                  {tasksSlice.map((task) => (
-                    <div
-                      key={task.id}
-                      className={cn(
-                        "flex items-center gap-1 rounded px-1 py-0.5 truncate",
-                        task.status === "COMPLETED"
-                          ? "bg-muted/40"
-                          : "bg-muted/60"
-                      )}
-                    >
+                  >
+                    {/* Date number */}
+                    <div className="flex items-center justify-between mb-0.5">
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 shrink-0 rounded-full",
-                          PRIORITY_DOT[task.priority]
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          "truncate text-[11px]",
-                          task.status === "COMPLETED"
-                            ? "line-through text-muted-foreground"
+                          "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
+                          isTodayDay
+                            ? "bg-primary text-primary-foreground"
+                            : !isCurrentMonth
+                            ? "text-muted-foreground"
                             : "text-foreground"
                         )}
                       >
-                        {task.title}
+                        {format(day, "d")}
                       </span>
+                      {dayTasks.length > 0 && (
+                        <span className="text-[10px] text-muted-foreground pr-0.5">
+                          {completedCount}/{dayTasks.length}
+                        </span>
+                      )}
                     </div>
-                  ))}
 
-                  {overflow > 0 && (
-                    <span className="px-1 text-[10px] text-muted-foreground">
-                      +{overflow} more
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                    {/* Events */}
+                    {eventsSlice.map((event) => (
+                      <DraggableChip key={event.id} id={`event:${event.id}`}>
+                        <div className="flex items-center gap-1 rounded px-1 py-0.5 bg-violet-100 dark:bg-violet-900/30 truncate">
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
+                          <span className="truncate text-[11px] text-violet-800 dark:text-violet-300">
+                            {event.title}
+                          </span>
+                        </div>
+                      </DraggableChip>
+                    ))}
+
+                    {/* Tasks */}
+                    {tasksSlice.map((task) => (
+                      <DraggableChip key={task.id} id={`task:${task.id}`}>
+                        <div
+                          className={cn(
+                            "flex items-center gap-1 rounded px-1 py-0.5 truncate",
+                            task.status === "COMPLETED"
+                              ? "bg-muted/40"
+                              : "bg-muted/60"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "h-1.5 w-1.5 shrink-0 rounded-full",
+                              PRIORITY_DOT[task.priority]
+                            )}
+                          />
+                          <span
+                            className={cn(
+                              "truncate text-[11px]",
+                              task.status === "COMPLETED"
+                                ? "line-through text-muted-foreground"
+                                : "text-foreground"
+                            )}
+                          >
+                            {task.title}
+                          </span>
+                        </div>
+                      </DraggableChip>
+                    ))}
+
+                    {overflow > 0 && (
+                      <span className="px-1 text-[10px] text-muted-foreground">
+                        +{overflow} more
+                      </span>
+                    )}
+                  </DroppableDay>
+                );
+              })}
+            </div>
           </div>
-        </div>
+
+          {/* Floating preview while dragging */}
+          <DragOverlay>
+            {activeTask && (
+              <div
+                className={cn(
+                  "flex items-center gap-1 rounded px-1 py-0.5 shadow-lg cursor-grabbing",
+                  activeTask.status === "COMPLETED" ? "bg-muted/40" : "bg-muted/60"
+                )}
+              >
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 shrink-0 rounded-full",
+                    PRIORITY_DOT[activeTask.priority]
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-[11px] max-w-[120px] truncate",
+                    activeTask.status === "COMPLETED" && "line-through text-muted-foreground"
+                  )}
+                >
+                  {activeTask.title}
+                </span>
+              </div>
+            )}
+            {activeEvent && (
+              <div className="flex items-center gap-1 rounded px-1 py-0.5 bg-violet-100 dark:bg-violet-900/30 shadow-lg cursor-grabbing">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
+                <span className="text-[11px] text-violet-800 dark:text-violet-300 max-w-[120px] truncate">
+                  {activeEvent.title}
+                </span>
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
 
         {/* Selected day panel */}
         <div className="lg:w-72 shrink-0 flex flex-col gap-4 lg:overflow-y-auto">
