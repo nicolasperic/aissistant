@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Trash2, Calendar } from "lucide-react";
+import { ExternalLink, Pencil, Trash2, Calendar } from "lucide-react";
 import { differenceInCalendarDays, format } from "date-fns";
 import type { Event } from "@prisma/client";
 
@@ -21,9 +21,11 @@ function getDaysBg(days: number): string {
 
 export function EventCard({
   event,
+  onEdit,
   onDelete,
 }: {
   event: Event;
+  onEdit?: (event: Event) => void;
   onDelete?: (id: string) => void;
 }) {
   const daysRemaining = differenceInCalendarDays(new Date(event.eventDate), new Date());
@@ -64,6 +66,16 @@ export function EventCard({
                 <ExternalLink className="h-4 w-4" />
               </Button>
             </a>
+          )}
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => onEdit(event)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
           )}
           {onDelete && (
             <Button

@@ -23,6 +23,7 @@ export default function GoalDetailPage() {
   const [editingTask, setEditingTask] = useState<TaskWithGoal | null>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [progressInput, setProgressInput] = useState("0");
 
   // Planning notes state
   const [notes, setNotes] = useState("");
@@ -42,6 +43,7 @@ export default function GoalDetailPage() {
     if (found) {
       setGoal(found);
       setProgress(found.progress);
+      setProgressInput(String(found.progress));
       if (!notesInitialized.current) {
         setNotes(found.notes || "");
         notesInitialized.current = true;
@@ -172,8 +174,12 @@ export default function GoalDetailPage() {
               type="number"
               min={0}
               max={100}
-              value={progress}
-              onChange={(e) => setProgress(Number(e.target.value))}
+              value={progressInput}
+              onChange={(e) => {
+                setProgressInput(e.target.value);
+                const num = parseInt(e.target.value, 10);
+                if (!isNaN(num)) setProgress(Math.min(100, Math.max(0, num)));
+              }}
               className="w-24"
             />
             <span className="text-sm text-muted-foreground">%</span>

@@ -9,6 +9,8 @@ import type { Event } from "@prisma/client";
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const loadEvents = useCallback(async () => {
     const res = await fetch("/api/events");
@@ -34,6 +36,20 @@ export default function EventsPage() {
     loadEvents();
   };
 
+  const handleEdit = (event: Event) => {
+    setEditingEvent(event);
+    setEditOpen(true);
+  };
+
+  const handleEditSubmit = async (data: Record<string, string>) => {
+    await fetch("/api/events", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editingEvent!.id, ...data }),
+    });
+    loadEvents();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -54,6 +70,12 @@ export default function EventsPage() {
           <p className="text-muted-foreground">Track upcoming exams, deadlines, and milestones</p>
         </div>
         <EventForm onSubmit={handleCreate} />
+        <EventForm
+          onSubmit={handleEditSubmit}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          initialData={editingEvent}
+        />
       </div>
 
       <Tabs defaultValue="upcoming">
@@ -70,7 +92,7 @@ export default function EventsPage() {
           ) : (
             <div className="space-y-3">
               {upcoming.map((event) => (
-                <EventCard key={event.id} event={event} onDelete={handleDelete} />
+                <EventCard key={event.id} event={event} onEdit={handleEdit} onDelete={handleDelete} />
               ))}
             </div>
           )}
@@ -82,7 +104,7 @@ export default function EventsPage() {
           ) : (
             <div className="space-y-3">
               {past.map((event) => (
-                <EventCard key={event.id} event={event} onDelete={handleDelete} />
+                <EventCard key={event.id} event={event} onEdit={handleEdit} onDelete={handleDelete} />
               ))}
             </div>
           )}
