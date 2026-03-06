@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { WeeklyOverview } from "@/components/dashboard/weekly-overview";
 import { GoalProgressChart } from "@/components/dashboard/goal-progress-chart";
 import { EventsCountdown } from "@/components/dashboard/events-countdown";
@@ -14,8 +14,10 @@ import { startOfWeek, endOfWeek, startOfDay, endOfDay, format, isWednesday, isTh
 import { AlertCircle, Calendar, Sparkles } from "lucide-react";
 import type { Goal, Event, UserStats } from "@prisma/client";
 import type { TaskWithGoal } from "@/lib/types";
+import { useSettings } from "@/components/layout/settings-context";
 
 export default function Dashboard() {
+  const { settings: { weekStartsOn } } = useSettings();
   const [weeklyStats, setWeeklyStats] = useState({ completedTasks: 0, totalTasks: 0 });
   const [todayTasks, setTodayTasks] = useState<TaskWithGoal[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -34,12 +36,17 @@ export default function Dashboard() {
     return data as TaskWithGoal[];
   }, []);
 
+  const { ws, we } = useMemo(() => {
+    const now = new Date();
+    return {
+      ws: startOfWeek(now, { weekStartsOn }),
+      we: endOfWeek(now, { weekStartsOn }),
+    };
+  }, [weekStartsOn]);
+
   useEffect(() => {
     async function load() {
       try {
-        const now = new Date();
-        const ws = startOfWeek(now, { weekStartsOn: 1 });
-        const we = endOfWeek(now, { weekStartsOn: 1 });
 
         const [tasksRes, goalsRes, eventsRes, rewardsRes, todayData] = await Promise.all([
           fetch(`/api/tasks?from=${ws.toISOString()}&to=${we.toISOString()}`),
@@ -68,7 +75,7 @@ export default function Dashboard() {
       }
     }
     load();
-  }, [fetchTodayTasks]);
+  }, [fetchTodayTasks, ws, we]);
 
   const handleStatusChange = async (id: string, status: string) => {
     await fetch("/api/tasks", {

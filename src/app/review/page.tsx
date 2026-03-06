@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,8 +12,10 @@ import { Sparkles, Loader2, CheckCircle2, Circle, ChevronDown } from "lucide-rea
 import { startOfWeek, endOfWeek, format } from "date-fns";
 import type { AiReviewResponse } from "@/lib/types";
 import type { WeeklyReview } from "@prisma/client";
+import { useSettings } from "@/components/layout/settings-context";
 
 export default function ReviewPage() {
+  const { settings: { weekStartsOn } } = useSettings();
   const [rating, setRating] = useState(0);
   const [userNotes, setUserNotes] = useState("");
   const [studyMinutes, setStudyMinutes] = useState(0);
@@ -24,8 +26,10 @@ export default function ReviewPage() {
   const [expandedReviewId, setExpandedReviewId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 6 });
-  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 6 });
+  const { weekStart, weekEnd } = useMemo(() => ({
+    weekStart: startOfWeek(new Date(), { weekStartsOn }),
+    weekEnd: endOfWeek(new Date(), { weekStartsOn }),
+  }), [weekStartsOn]);
 
   const loadData = useCallback(async () => {
     const [scheduledRes, completedRes, reviewsRes] = await Promise.all([
@@ -44,7 +48,7 @@ export default function ReviewPage() {
     });
     setPastReviews(reviews);
     setLoading(false);
-  }, []);
+  }, [weekStart, weekEnd]);
 
   useEffect(() => {
     loadData();

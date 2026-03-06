@@ -44,11 +44,13 @@ import {
 import type { TaskWithGoal } from "@/lib/types";
 import type { Goal } from "@prisma/client";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useSettings } from "@/components/layout/settings-context";
 
 type RangeType = "weekly" | "monthly";
 type ViewScope = "week" | "month";
 
 export default function PlanPage() {
+  const { settings: { weekStartsOn } } = useSettings();
   const [tasks, setTasks] = useState<TaskWithGoal[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -71,9 +73,14 @@ export default function PlanPage() {
   const [planStartDate, setPlanStartDate] = useState<string>("");
   const [planEndDate, setPlanEndDate] = useState<string>("");
 
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
-  const monthEnd = endOfWeek(addWeeks(weekStart, 3), { weekStartsOn: 1 });
+  const { weekStart, weekEnd, monthEnd } = useMemo(() => {
+    const ws = startOfWeek(new Date(), { weekStartsOn });
+    return {
+      weekStart: ws,
+      weekEnd: endOfWeek(new Date(), { weekStartsOn }),
+      monthEnd: endOfWeek(addWeeks(ws, 3), { weekStartsOn }),
+    };
+  }, [weekStartsOn]);
 
   // Always fetch the full 4-week range so scope toggle is instant
   const loadTasks = useCallback(async () => {
@@ -89,7 +96,7 @@ export default function PlanPage() {
     setGoals(await goalsRes.json());
     setDraftTasks(await draftsRes.json());
     setLoading(false);
-  }, []);
+  }, [weekStart, monthEnd]);
 
   useEffect(() => {
     setLoading(true);
@@ -223,13 +230,13 @@ export default function PlanPage() {
       });
     }
     return tasks;
-  }, [tasks, viewScope]);
+  }, [tasks, viewScope, weekStart, weekEnd]);
 
   // Compute days for the active range
   const totalDays = viewScope === "month" ? 28 : 7;
   const days = useMemo(
     () => Array.from({ length: totalDays }, (_, i) => addDays(weekStart, i)),
-    [viewScope]
+    [viewScope, totalDays, weekStart]
   );
 
   // Group days by week for monthly view
@@ -238,14 +245,14 @@ export default function PlanPage() {
     const result: { weekStart: Date; weekEnd: Date; days: Date[] }[] = [];
     for (let w = 0; w < 4; w++) {
       const ws = addWeeks(weekStart, w);
-      const we = endOfWeek(ws, { weekStartsOn: 1 });
+      const we = endOfWeek(ws, { weekStartsOn });
       const weekDays = days.filter((d) =>
-        isSameWeek(d, ws, { weekStartsOn: 1 })
+        isSameWeek(d, ws, { weekStartsOn })
       );
       result.push({ weekStart: ws, weekEnd: we, days: weekDays });
     }
     return result;
-  }, [viewScope, days]);
+  }, [viewScope, days, weekStart, weekStartsOn]);
 
   if (loading) {
     return (
@@ -501,14 +508,14 @@ export default function PlanPage() {
               (t) =>
                 t.scheduledDate &&
                 isSameWeek(new Date(t.scheduledDate), week.weekStart, {
-                  weekStartsOn: 1,
+                  weekStartsOn,
                 })
             );
             const weekCompleted = weekTasks.filter(
               (t) => t.status === "COMPLETED"
             ).length;
             const isCurrentWeek = isSameWeek(new Date(), week.weekStart, {
-              weekStartsOn: 1,
+              weekStartsOn,
             });
 
             return (
