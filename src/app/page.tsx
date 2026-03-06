@@ -200,7 +200,7 @@ export default function Dashboard() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <GoalProgressChart goals={goals.filter((g: Goal) => g.progress < 100)} />
+        <GoalProgressChart goals={goals} />
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Active Goals</CardTitle>

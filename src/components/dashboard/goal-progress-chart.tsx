@@ -18,6 +18,7 @@ const COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#ec4899"
 export function GoalProgressChart({ goals }: { goals: Goal[] }) {
   const data = goals.slice(0, 6).map((g) => ({
     name: g.title.length > 15 ? g.title.substring(0, 15) + "..." : g.title,
+    fullName: g.title,
     progress: Math.round(g.progress),
     type: g.type,
   }));
@@ -55,6 +56,7 @@ export function GoalProgressChart({ goals }: { goals: Goal[] }) {
             />
             <Tooltip
               formatter={(value) => [`${value}%`, "Progress"]}
+              labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName ?? ""}
               contentStyle={{
                 borderRadius: "8px",
                 border: "1px solid hsl(var(--border))",
