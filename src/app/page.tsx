@@ -168,39 +168,28 @@ export default function Dashboard() {
         <QuickActions />
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-4">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-sm font-medium">
-            {format(today, "EEEE, MMM d")} (Today)
-          </CardTitle>
-          <span className="ml-auto text-xs text-muted-foreground">
-            {todayTasks.filter((t) => t.status === "COMPLETED").length}/{todayTasks.length} done
-          </span>
-        </CardHeader>
-        <CardContent>
-          <TaskList
-            tasks={todayTasks}
-            onStatusChange={handleStatusChange}
-            onEdit={setEditingTask}
-            onDelete={handleDelete}
-            emptyMessage="No tasks scheduled for today"
-          />
-        </CardContent>
-      </Card>
-
-      {editingTask && (
-        <TaskEditForm
-          task={editingTask}
-          goals={goals}
-          open={!!editingTask}
-          onOpenChange={(open) => { if (!open) setEditingTask(null); }}
-          onSubmit={handleEditTask}
-        />
-      )}
-
       <div className="grid gap-4 md:grid-cols-2">
-        <GoalProgressChart goals={goals} />
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-4">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">
+              {format(today, "EEEE, MMM d")} (Today)
+            </CardTitle>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {todayTasks.filter((t) => t.status === "COMPLETED").length}/{todayTasks.length} done
+            </span>
+          </CardHeader>
+          <CardContent>
+            <TaskList
+              tasks={todayTasks}
+              onStatusChange={handleStatusChange}
+              onEdit={setEditingTask}
+              onDelete={handleDelete}
+              emptyMessage="No tasks scheduled for today"
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Active Goals</CardTitle>
@@ -225,6 +214,21 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {editingTask && (
+        <TaskEditForm
+          task={editingTask}
+          goals={goals}
+          open={!!editingTask}
+          onOpenChange={(open) => { if (!open) setEditingTask(null); }}
+          onSubmit={handleEditTask}
+        />
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <GoalProgressChart goals={goals.filter((g: Goal) => ["YEARLY", "QUARTERLY", "MONTHLY"].includes(g.type)).sort((a: Goal, b: Goal) => b.position - a.position)} />
+        <GoalProgressChart goals={goals.filter((g: Goal) => g.type === "WEEKLY").sort((a: Goal, b: Goal) => b.position - a.position)} title="Weekly Goals" />
       </div>
     </div>
   );

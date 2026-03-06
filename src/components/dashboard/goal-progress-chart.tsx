@@ -15,10 +15,9 @@ import type { Goal } from "@prisma/client";
 
 const COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
 
-export function GoalProgressChart({ goals }: { goals: Goal[] }) {
-  const data = goals.slice(0, 6).map((g) => ({
-    name: g.title.length > 15 ? g.title.substring(0, 15) + "..." : g.title,
-    fullName: g.title,
+export function GoalProgressChart({ goals, title = "Goal Progress" }: { goals: Goal[]; title?: string }) {
+  const data = goals.slice(0, 10).map((g) => ({
+    name: g.title,
     progress: Math.round(g.progress),
     type: g.type,
   }));
@@ -27,7 +26,7 @@ export function GoalProgressChart({ goals }: { goals: Goal[] }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Goal Progress</CardTitle>
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="py-8 text-center text-sm text-muted-foreground">
@@ -41,28 +40,28 @@ export function GoalProgressChart({ goals }: { goals: Goal[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium">Goal Progress</CardTitle>
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={360}>
           <BarChart data={data} layout="vertical" margin={{ left: 0, right: 20 }}>
             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
             <YAxis
               type="category"
               dataKey="name"
-              width={100}
-              tick={{ fontSize: 11 }}
+              width={160}
+              tick={{ fontSize: 13, fill: "currentColor" }}
             />
             <Tooltip
               formatter={(value) => [`${value}%`, "Progress"]}
-              labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName ?? ""}
               contentStyle={{
                 borderRadius: "8px",
                 border: "1px solid hsl(var(--border))",
                 backgroundColor: "hsl(var(--popover))",
-                color: "hsl(var(--popover-foreground))",
               }}
+              labelStyle={{ color: "white" }}
+              itemStyle={{ color: "white" }}
             />
             <Bar dataKey="progress" radius={[0, 4, 4, 0]}>
               {data.map((_, index) => (
