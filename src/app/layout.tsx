@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { SettingsProvider } from "@/components/layout/settings-context";
+import { OnboardingProvider } from "@/components/layout/onboarding-context";
 import { Sidebar, MobileNav } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,6 +40,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SettingsProvider>
+          <OnboardingProvider>
           <TooltipProvider>
             <div className="flex h-screen overflow-hidden">
               <Sidebar />
@@ -51,6 +53,7 @@ export default function RootLayout({
             </div>
             <MobileNav />
           </TooltipProvider>
+          </OnboardingProvider>
           </SettingsProvider>
         </ThemeProvider>
       </body>

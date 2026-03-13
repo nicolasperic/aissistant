@@ -7,6 +7,7 @@ import { StreakTracker } from "@/components/rewards/streak-tracker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { POINTS } from "@/lib/rewards";
 import type { BadgeDefinition, Reward, UserStats } from "@/lib/types";
+import { TourButton } from "@/components/layout/tour-button";
 
 export default function RewardsPage() {
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -36,9 +37,12 @@ export default function RewardsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Rewards & Achievements</h1>
-        <p className="text-muted-foreground">Track your points, streaks, and badges</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Rewards & Achievements</h1>
+          <p className="text-muted-foreground">Track your points, streaks, and badges</p>
+        </div>
+        <TourButton tourId="rewards" autoStart={false} />
       </div>
 
       <PointsDisplay
@@ -48,12 +52,14 @@ export default function RewardsPage() {
         totalBadges={rewards.filter((r) => r.type === "badge").length}
       />
 
-      <StreakTracker
-        currentStreak={stats?.currentStreak ?? 0}
-        longestStreak={stats?.longestStreak ?? 0}
-      />
+      <div id="tour-rewards-streak">
+        <StreakTracker
+          currentStreak={stats?.currentStreak ?? 0}
+          longestStreak={stats?.longestStreak ?? 0}
+        />
+      </div>
 
-      <div>
+      <div id="tour-rewards-badges">
         <h2 className="text-lg font-semibold mb-4">Badges</h2>
         <BadgeGrid badges={badges} earned={rewards} />
       </div>

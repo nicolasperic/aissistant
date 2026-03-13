@@ -16,6 +16,7 @@ import { GoalHierarchy } from "@/components/goals/goal-hierarchy";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { GoalWithRelations } from "@/lib/types";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { TourButton } from "@/components/layout/tour-button";
 
 export default function GoalsPage() {
   const [goals, setGoals] = useState<GoalWithRelations[]>([]);
@@ -135,10 +136,15 @@ export default function GoalsPage() {
           <h1 className="text-2xl font-bold">Goals</h1>
           <p className="text-muted-foreground">Manage your yearly, quarterly, monthly, and weekly goals</p>
         </div>
-        <GoalForm
-          parentGoals={goals.filter((g) => g.type !== "WEEKLY")}
-          onSubmit={handleCreate}
-        />
+        <div className="flex items-center gap-2">
+          <TourButton tourId="goals" autoStart={goals.length === 0} />
+          <div id="tour-goal-create">
+            <GoalForm
+              parentGoals={goals.filter((g) => g.type !== "WEEKLY")}
+              onSubmit={handleCreate}
+            />
+          </div>
+        </div>
       </div>
 
       <Tabs value={goalsTab} onValueChange={setGoalsTab}>
@@ -175,7 +181,7 @@ export default function GoalsPage() {
         <TabsContent value="cards" className="mt-4">
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext items={filteredGoals.map((g) => g.id)} strategy={rectSortingStrategy}>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div id="tour-goals-grid" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredGoals.map((goal) => (
                   <SortableGoalCard
                     key={goal.id}

@@ -5,6 +5,7 @@ import { EventCard } from "@/components/events/event-card";
 import { EventForm } from "@/components/events/event-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Event } from "@prisma/client";
+import { TourButton } from "@/components/layout/tour-button";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -69,7 +70,10 @@ export default function EventsPage() {
           <h1 className="text-2xl font-bold">Events & Certifications</h1>
           <p className="text-muted-foreground">Track upcoming exams, deadlines, and milestones</p>
         </div>
-        <EventForm onSubmit={handleCreate} />
+        <div className="flex items-center gap-2">
+          <TourButton tourId="events" autoStart={events.length === 0} />
+          <div id="tour-add-event"><EventForm onSubmit={handleCreate} /></div>
+        </div>
         <EventForm
           onSubmit={handleEditSubmit}
           open={editOpen}
@@ -90,7 +94,7 @@ export default function EventsPage() {
               No upcoming events. Add your certification exam dates!
             </p>
           ) : (
-            <div className="space-y-3">
+            <div id="tour-events-list" className="space-y-3">
               {upcoming.map((event) => (
                 <EventCard key={event.id} event={event} onEdit={handleEdit} onDelete={handleDelete} />
               ))}

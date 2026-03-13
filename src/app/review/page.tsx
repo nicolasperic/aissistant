@@ -13,6 +13,7 @@ import { startOfWeek, endOfWeek, format } from "date-fns";
 import type { AiReviewResponse } from "@/lib/types";
 import type { WeeklyReview } from "@prisma/client";
 import { useSettings } from "@/components/layout/settings-context";
+import { TourButton } from "@/components/layout/tour-button";
 
 export default function ReviewPage() {
   const { settings: { weekStartsOn } } = useSettings();
@@ -98,11 +99,14 @@ export default function ReviewPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Weekly Review</h1>
-        <p className="text-muted-foreground">
-          Week of {format(weekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Weekly Review</h1>
+          <p className="text-muted-foreground">
+            Week of {format(weekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
+          </p>
+        </div>
+        <TourButton tourId="review" autoStart={pastReviews.length === 0} />
       </div>
 
       <Card>
@@ -141,7 +145,7 @@ export default function ReviewPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="tour-review-form">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Rate Your Week</CardTitle>
         </CardHeader>
@@ -175,7 +179,7 @@ export default function ReviewPage() {
               rows={3}
             />
           </div>
-          <Button onClick={handleSubmitReview} disabled={submitting} className="w-full sm:w-auto">
+          <Button id="tour-review-submit" onClick={handleSubmitReview} disabled={submitting} className="w-full sm:w-auto">
             {submitting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (

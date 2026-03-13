@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { TourButton } from "@/components/layout/tour-button";
 import {
   startOfMonth,
   endOfMonth,
@@ -196,7 +197,7 @@ export default function CalendarPage() {
       setTasks((prev) =>
         prev.map((t) =>
           t.id === itemId
-            ? { ...t, scheduledDate: targetDate.toISOString() }
+            ? { ...t, scheduledDate: targetDate }
             : t
         )
       );
@@ -213,7 +214,7 @@ export default function CalendarPage() {
       setEvents((prev) =>
         prev.map((e) =>
           e.id === itemId
-            ? { ...e, eventDate: targetDate.toISOString() }
+            ? { ...e, eventDate: targetDate }
             : e
         )
       );
@@ -259,9 +260,12 @@ export default function CalendarPage() {
             </Button>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={goToToday}>
-          Today
-        </Button>
+        <div className="flex items-center gap-2">
+          <TourButton tourId="calendar" autoStart={false} />
+          <Button variant="outline" size="sm" onClick={goToToday}>
+            Today
+          </Button>
+        </div>
       </div>
 
       {/* Main content */}
@@ -273,6 +277,7 @@ export default function CalendarPage() {
           onDragEnd={handleDragEnd}
         >
           <div
+            id="tour-calendar-grid"
             className={cn(
               "flex flex-1 min-w-0 flex-col transition-opacity",
               loading && "opacity-50 pointer-events-none"

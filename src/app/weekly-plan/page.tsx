@@ -45,6 +45,7 @@ import type { TaskWithGoal } from "@/lib/types";
 import type { Goal } from "@prisma/client";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useSettings } from "@/components/layout/settings-context";
+import { TourButton } from "@/components/layout/tour-button";
 
 type RangeType = "weekly" | "monthly";
 type ViewScope = "week" | "month";
@@ -279,7 +280,7 @@ export default function PlanPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">Plan</h1>
             {/* View scope toggle */}
-            <div className="inline-flex items-center rounded-lg border bg-muted p-0.5">
+            <div id="tour-plan-view-scope" className="inline-flex items-center rounded-lg border bg-muted p-0.5">
               <button
                 onClick={() => setViewScope("week")}
                 className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -312,6 +313,7 @@ export default function PlanPage() {
           </p>
         </div>
         <div className="flex gap-2 items-center">
+          <TourButton tourId="weekly-plan" autoStart={tasks.length === 0} />
           {draftTasks.length > 0 && (
             <Button
               variant="outline"
@@ -323,10 +325,10 @@ export default function PlanPage() {
               Review {draftTasks.length} draft{draftTasks.length !== 1 ? "s" : ""}
             </Button>
           )}
-          <TaskForm goals={goals} onSubmit={handleCreateTask} />
+          <div id="tour-add-task"><TaskForm goals={goals} onSubmit={handleCreateTask} /></div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" disabled={generating}>
+              <Button id="tour-generate-plan" size="sm" disabled={generating}>
                 {generating ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
