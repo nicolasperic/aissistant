@@ -19,6 +19,7 @@ export default function ReviewPage() {
   const [rating, setRating] = useState(0);
   const [userNotes, setUserNotes] = useState("");
   const [studyMinutes, setStudyMinutes] = useState(0);
+  const [studyMinutesInput, setStudyMinutesInput] = useState("0");
   const [submitting, setSubmitting] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<AiReviewResponse | null>(null);
   const [weekStats, setWeekStats] = useState({ completed: 0, total: 0 });
@@ -155,8 +156,12 @@ export default function ReviewPage() {
               id="study-min"
               type="number"
               min={0}
-              value={studyMinutes}
-              onChange={(e) => setStudyMinutes(Number(e.target.value))}
+              value={studyMinutesInput}
+              onChange={(e) => {
+                setStudyMinutesInput(e.target.value);
+                const num = parseInt(e.target.value, 10);
+                if (!isNaN(num)) setStudyMinutes(Math.max(0, num));
+              }}
               className="w-40"
             />
           </div>
