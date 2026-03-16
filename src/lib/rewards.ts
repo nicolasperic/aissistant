@@ -117,7 +117,21 @@ export async function updateStreak(): Promise<{ currentStreak: number; longestSt
     } else if (diffDays === 1) {
       newStreak = stats.currentStreak + 1;
     } else {
-      newStreak = 1;
+      // Check if any of the gap days had scheduled tasks.
+      // If all gap days were task-less, the streak shouldn't break.
+      const gapStart = new Date(lastDate);
+      gapStart.setDate(gapStart.getDate() + 1);
+      const gapEnd = new Date(today);
+      gapEnd.setDate(gapEnd.getDate() - 1);
+      gapEnd.setHours(23, 59, 59, 999);
+
+      const tasksInGap = await db.task.count({
+        where: {
+          scheduledDate: { gte: gapStart, lte: gapEnd },
+        },
+      });
+
+      newStreak = tasksInGap === 0 ? stats.currentStreak + 1 : 1;
     }
   } else {
     newStreak = 1;
