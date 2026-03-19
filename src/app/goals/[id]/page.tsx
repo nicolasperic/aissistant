@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TaskList } from "@/components/tasks/task-list";
 import { TaskForm } from "@/components/tasks/task-form";
 import { TaskEditForm } from "@/components/tasks/task-edit-form";
+import { GoalForm } from "@/components/goals/goal-form";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -95,6 +96,15 @@ export default function GoalDetailPage() {
       }),
     });
     setEditingTask(null);
+    loadData();
+  };
+
+  const handleCreateSubGoal = async (data: Record<string, string>) => {
+    await fetch("/api/goals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
     loadData();
   };
 
@@ -226,6 +236,14 @@ export default function GoalDetailPage() {
         </CardContent>
       </Card>
 
+      <div className="flex justify-end">
+        <GoalForm
+          fixedParentId={goal.id}
+          fixedParentLabel={goal.title}
+          onSubmit={handleCreateSubGoal}
+        />
+      </div>
+
       {goal.children && goal.children.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
@@ -233,7 +251,7 @@ export default function GoalDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {goal.children.map((child) => (
+              {[...goal.children].sort((a, b) => b.position - a.position).map((child) => (
                 <Link key={child.id} href={`/goals/${child.id}`} className="flex items-center justify-between p-2 rounded hover:bg-muted/50">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">{child.type.charAt(0)}</Badge>

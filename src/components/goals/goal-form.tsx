@@ -34,9 +34,13 @@ type GoalFormData = {
 
 export function GoalForm({
   parentGoals,
+  fixedParentId,
+  fixedParentLabel,
   onSubmit,
 }: {
   parentGoals?: Goal[];
+  fixedParentId?: string;
+  fixedParentLabel?: string;
   onSubmit: (data: GoalFormData) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -48,7 +52,7 @@ export function GoalForm({
     startDate: new Date().toISOString().split("T")[0],
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     category: "",
-    parentId: "",
+    parentId: fixedParentId ?? "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,7 +67,7 @@ export function GoalForm({
         startDate: new Date().toISOString().split("T")[0],
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         category: "",
-        parentId: "",
+        parentId: fixedParentId ?? "",
       });
       setOpen(false);
     } finally {
@@ -76,7 +80,7 @@ export function GoalForm({
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          New Goal
+          {fixedParentId ? "Add Sub-Goal" : "New Goal"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
@@ -155,7 +159,12 @@ export function GoalForm({
               />
             </div>
           </div>
-          {parentGoals && parentGoals.length > 0 && (
+          {fixedParentId ? (
+            <div className="min-w-0">
+              <Label>Parent Goal</Label>
+              <Input value={fixedParentLabel ?? fixedParentId} disabled />
+            </div>
+          ) : parentGoals && parentGoals.length > 0 && (
             <div className="min-w-0">
               <Label>Parent Goal</Label>
               <Select value={form.parentId} onValueChange={(v) => setForm({ ...form, parentId: v })}>
