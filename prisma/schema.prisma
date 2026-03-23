@@ -128,3 +128,27 @@ model AiContext {
   metadata  Json?
   createdAt DateTime @default(now())
 }
+
+enum CardRating {
+  EASY
+  MEDIUM
+  HARD
+  MISSED
+}
+
+model Flashcard {
+  id             String      @id @default(cuid())
+  question       String
+  answer         String
+  hint           String?
+  topic          String
+  examCode       String?
+  goalId         String?
+  correctCount   Int         @default(0)
+  incorrectCount Int         @default(0)
+  lastReviewedAt DateTime?
+  nextReviewAt   DateTime?
+  lastRating     CardRating?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
