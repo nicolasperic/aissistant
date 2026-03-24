@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -75,6 +76,9 @@ export function StudyModal({ open, onClose, cards, onSessionComplete }: StudyMod
         className="max-w-lg border-0 bg-background/95 backdrop-blur-md shadow-2xl"
         onInteractOutside={(e) => e.preventDefault()}
       >
+        <VisuallyHidden>
+          <DialogTitle>Study Session</DialogTitle>
+        </VisuallyHidden>
         {done ? (
           <div className="space-y-6 py-2">
             <div className="text-center">
