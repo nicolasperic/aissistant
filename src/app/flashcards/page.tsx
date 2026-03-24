@@ -87,7 +87,7 @@ export default function FlashcardsPage() {
 
   const selectedGoal = goals.find((g) => g.id === selectedGoalId);
 
-  const handleStartSession = () => {
+  const handleStartSession = (dueOnly: boolean) => {
     let pool: Flashcard[];
     if (selectedGoalId) {
       const ids = getDescendantIds(selectedGoalId, goals);
@@ -95,11 +95,10 @@ export default function FlashcardsPage() {
     } else {
       pool = [...cards];
     }
-    // Due cards first, then the rest
     const now = new Date();
     const due = pool.filter((c) => !c.nextReviewAt || new Date(c.nextReviewAt) <= now);
     const notDue = pool.filter((c) => c.nextReviewAt && new Date(c.nextReviewAt) > now);
-    setStudyCards([...due, ...notDue]);
+    setStudyCards(dueOnly ? due : [...due, ...notDue]);
     setStudyOpen(true);
   };
 
@@ -198,19 +197,25 @@ export default function FlashcardsPage() {
             </div>
           </div>
 
-          <Button
-            onClick={handleStartSession}
-            disabled={scopeStats.total === 0}
-            size="lg"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Start Session
-            {selectedGoal && (
-              <Badge variant="secondary" className="ml-2 text-xs">
-                {selectedGoal.type}
-              </Badge>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleStartSession(true)}
+              disabled={scopeStats.due === 0}
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Due only
+              <Badge variant="secondary" className="ml-2 text-xs">{scopeStats.due}</Badge>
+            </Button>
+            <Button
+              onClick={() => handleStartSession(false)}
+              disabled={scopeStats.total === 0}
+            >
+              <Layers className="h-4 w-4 mr-2" />
+              Full deck
+              <Badge variant="secondary" className="ml-2 text-xs">{scopeStats.total}</Badge>
+            </Button>
+          </div>
         </div>
       </div>
 
