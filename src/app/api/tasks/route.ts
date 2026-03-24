@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   const tasks = await db.task.findMany({
     where,
-    include: { goal: true },
+    include: { goal: true, studyNote: { select: { id: true } } },
     orderBy: [{ scheduledDate: "asc" }, { priority: "desc" }],
   });
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       estimatedMinutes: body.estimatedMinutes,
       goalId: body.goalId || null,
     },
-    include: { goal: true },
+    include: { goal: true, studyNote: { select: { id: true } } },
   });
 
   return NextResponse.json(task, { status: 201 });
@@ -60,6 +60,7 @@ export async function PUT(req: NextRequest) {
   const data: Record<string, unknown> = {};
   if (body.title !== undefined) data.title = body.title;
   if (body.description !== undefined) data.description = body.description;
+  if (body.planningNotes !== undefined) data.planningNotes = body.planningNotes;
   if (body.status !== undefined) data.status = body.status;
   if (body.priority !== undefined) data.priority = body.priority;
   if (body.scheduledDate !== undefined) data.scheduledDate = body.scheduledDate ? parseDateOnly(body.scheduledDate) : null;
@@ -99,7 +100,7 @@ export async function PUT(req: NextRequest) {
   const task = await db.task.update({
     where: { id: body.id },
     data,
-    include: { goal: true },
+    include: { goal: true, studyNote: { select: { id: true } } },
   });
 
   return NextResponse.json(task);

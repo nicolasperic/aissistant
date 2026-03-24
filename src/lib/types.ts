@@ -8,6 +8,7 @@ export type GoalWithRelations = Goal & {
 
 export type TaskWithGoal = Task & {
   goal?: Goal | null;
+  studyNote?: { id: string } | null;
 };
 
 export type WeeklyGoalDraft = {
