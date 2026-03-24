@@ -29,7 +29,7 @@ export function StreakCard({
           </div>
           <div>
             <div className="flex items-center justify-center gap-1">
-              <Star className="h-4 w-4 text-yellow-500" />
+              <Star className="h-4 w-4 shrink-0 text-yellow-500" />
               <span className="text-2xl font-bold">{totalPoints}</span>
             </div>
             <p className="text-xs text-muted-foreground">Points</p>
