@@ -207,6 +207,16 @@ export async function checkAndAwardBadges(): Promise<string[]> {
         earned = !!review && review.completedTasks === review.totalTasks;
         break;
       }
+      case "cert_ready": {
+        const certGoals = await db.goal.findMany({
+          where: { type: "QUARTERLY", title: { startsWith: "Pass Adobe Commerce" } },
+          include: { tasks: { select: { status: true } } },
+        });
+        earned = certGoals.some(
+          (g) => g.tasks.length > 0 && g.tasks.every((t) => t.status === "COMPLETED" || t.status === "SKIPPED")
+        );
+        break;
+      }
       default:
         break;
     }
