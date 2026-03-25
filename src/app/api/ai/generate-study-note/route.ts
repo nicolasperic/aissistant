@@ -10,6 +10,7 @@ Requirements:
 - Use fenced code blocks with correct language identifiers (e.g. \`\`\`php, \`\`\`xml, \`\`\`bash) for all code examples
 - Be thorough and detailed — this replaces manual CLI-generated study notes
 - For ASCII diagrams and box-drawing art, use only plain ASCII characters (-, |, +, >, <, v, ^, /) — do NOT use Unicode box-drawing or arrow characters (─, │, ┌, ►, ▼, etc.) as they cause alignment issues in monospace fonts
+- When generating a Table of Contents, anchor links MUST exactly match the slugified full heading text: lowercase, spaces replaced with hyphens, special characters removed. Example: heading "## 2. The Compilation Flow" → anchor "#2-the-compilation-flow". Never shorten or abbreviate anchors.
 - End the document with a ## Quick-Reference Checklist section containing concise bullet points of everything testable on the exam`;
 
 export async function POST(req: NextRequest) {

@@ -13,6 +13,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Layers, Loader2, RefreshCw, Trash2, Pencil, Check, X } from "lucide-react";
 import type { Components } from "react-markdown";
 
+function slugify(children: React.ReactNode): string {
+  const text = Array.isArray(children)
+    ? children.map((c) => (typeof c === "string" ? c : "")).join("")
+    : typeof children === "string"
+    ? children
+    : "";
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
 interface StudyNote {
   id: string;
   title: string;
@@ -151,13 +164,13 @@ export default function StudyNotePage() {
       );
     },
     h1: ({ children }) => (
-      <h1 className="mt-8 mb-4 text-2xl font-bold text-foreground border-b pb-2">{children}</h1>
+      <h1 id={slugify(children)} className="scroll-mt-20 mt-8 mb-4 text-2xl font-bold text-foreground border-b pb-2">{children}</h1>
     ),
     h2: ({ children }) => (
-      <h2 className="mt-6 mb-3 text-xl font-semibold text-foreground">{children}</h2>
+      <h2 id={slugify(children)} className="scroll-mt-20 mt-6 mb-3 text-xl font-semibold text-foreground">{children}</h2>
     ),
     h3: ({ children }) => (
-      <h3 className="mt-4 mb-2 text-base font-semibold text-foreground">{children}</h3>
+      <h3 id={slugify(children)} className="scroll-mt-20 mt-4 mb-2 text-base font-semibold text-foreground">{children}</h3>
     ),
     p: ({ children }) => (
       <p className="mb-3 leading-relaxed text-sm text-foreground/90">{children}</p>
