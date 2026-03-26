@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
-  const content = await generateCompletion(SYSTEM_PROMPT, userMessage);
+  const content = await generateCompletion(SYSTEM_PROMPT, userMessage, 32000);
 
   const goalId = task.goalId ?? undefined;
 

@@ -6,17 +6,19 @@ const anthropic = new Anthropic({
 
 export async function generateCompletion(
   systemPrompt: string,
-  userMessage: string
+  userMessage: string,
+  maxTokens: number = 8192
 ): Promise<string> {
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 8192,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-  });
+  const text = await anthropic.messages
+    .stream({
+      model: "claude-sonnet-4-6",
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+    })
+    .finalText();
 
-  const textBlock = response.content.find((block) => block.type === "text");
-  return textBlock?.text ?? "";
+  return text;
 }
 
 export async function generateJsonCompletion<T>(
