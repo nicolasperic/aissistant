@@ -67,14 +67,15 @@ model Task {
 }
 
 model StudyNote {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  taskId    String   @unique
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  goalId    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  title            String
+  content          String
+  taskId           String   @unique
+  task             Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  goalId           String?
+  bookmarkPosition String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Event {
