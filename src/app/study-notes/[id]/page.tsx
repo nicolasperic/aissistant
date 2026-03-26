@@ -406,8 +406,8 @@ export default function StudyNotePage() {
               <p className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wide">
                 Contents
               </p>
-              {headings.map((h) => (
-                <div key={`${h.slug}-${h.text}`} className="flex items-center gap-1 group">
+              {headings.map((h, i) => (
+                <div key={`${i}-${h.slug}`} className="flex items-center gap-1 group">
                   <button
                     onClick={() => handleBookmark(h.slug)}
                     title={bookmarkPosition === h.slug ? "Remove bookmark" : "Bookmark this section"}
