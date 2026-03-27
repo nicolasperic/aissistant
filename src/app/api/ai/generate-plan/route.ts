@@ -65,7 +65,8 @@ export async function POST(req: NextRequest) {
 
     const plan = await generateJsonCompletion<AiWeeklyPlan>(
       systemPrompt,
-      `Generate a ${rangeType} plan from ${planStartStr} to ${planEndStr}. Today is ${now.toISOString().split("T")[0]}.${focusGoals.length > 0 ? ` Focus on: ${focusGoals.map((g) => g.title).join(", ")}.` : ""}`
+      `Generate a ${rangeType} plan from ${planStartStr} to ${planEndStr}. Today is ${now.toISOString().split("T")[0]}.${focusGoals.length > 0 ? ` Focus on: ${focusGoals.map((g) => g.title).join(", ")}.` : ""}`,
+      32000
     );
 
     // Create weekly goal containers first, build weekKey → DB id map

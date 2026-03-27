@@ -42,12 +42,14 @@ export async function generateCompletion(
 
 export async function generateJsonCompletion<T>(
   systemPrompt: string,
-  userMessage: string
+  userMessage: string,
+  maxTokens: number = 8192
 ): Promise<T> {
   const response = await generateCompletion(
     systemPrompt +
       "\n\nIMPORTANT: Respond ONLY with valid JSON. No markdown, no code fences, no explanation.",
-    userMessage
+    userMessage,
+    maxTokens
   );
 
   const cleaned = response
