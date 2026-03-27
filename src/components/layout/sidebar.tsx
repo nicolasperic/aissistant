@@ -12,6 +12,7 @@ import {
   Trophy,
   Sparkles,
   Layers,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/review", label: "Review", icon: ClipboardCheck },
+  { href: "/study-notes", label: "Study Notes", icon: BookOpen },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
   { href: "/rewards", label: "Rewards", icon: Trophy },
 ];

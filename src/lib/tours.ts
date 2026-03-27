@@ -6,7 +6,9 @@ export type TourId =
   | "calendar"
   | "events"
   | "review"
-  | "rewards";
+  | "rewards"
+  | "flashcards"
+  | "study-notes";
 
 export const TOUR_STEP_IDS: Record<TourId, string[]> = {
   goals: ["goals-create", "goals-grid", "goals-planning-notes"],
@@ -15,6 +17,8 @@ export const TOUR_STEP_IDS: Record<TourId, string[]> = {
   events: ["events-create", "events-list"],
   review: ["review-rating", "review-submit", "review-ai"],
   rewards: ["rewards-streak", "rewards-badges"],
+  flashcards: ["flashcards-scope", "flashcards-session", "flashcards-manage"],
+  "study-notes": ["study-notes-list", "study-notes-generate"],
 };
 
 export const ALL_TOUR_STEPS = Object.values(TOUR_STEP_IDS).flat();
@@ -159,6 +163,60 @@ export const TOURS: Record<TourId, DriveStep[]> = {
           "Every completed task, review, and streak milestone earns points. Collect badges for achievements like your first plan, long streaks, and more. Check the Points Guide below to see what each action is worth.",
         side: "top",
         align: "start",
+      },
+    },
+  ],
+  flashcards: [
+    {
+      element: "#tour-flashcards-scope",
+      popover: {
+        title: "Scope Your Study Session",
+        description:
+          "Pick a goal from the dropdown to study only the flashcards tied to that certification or topic. Leave it empty to study everything at once.",
+        side: "bottom",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-flashcards-session",
+      popover: {
+        title: "Start a Study Session",
+        description:
+          "\"Due only\" shows cards that are ready for review based on spaced repetition — great for daily practice. \"Full deck\" lets you go through everything in scope regardless of schedule.",
+        side: "top",
+        align: "end",
+      },
+    },
+    {
+      element: "#tour-flashcards-manage",
+      popover: {
+        title: "Browse & Manage Cards",
+        description:
+          "The All cards tab lists every card in scope. Due now filters to only what needs reviewing today. Each card shows your correct/incorrect history and when it's next scheduled.",
+        side: "top",
+        align: "start",
+      },
+    },
+  ],
+  "study-notes": [
+    {
+      element: "#tour-study-notes-list",
+      popover: {
+        title: "Notes by Certification",
+        description:
+          "Study notes are grouped by your quarterly certification goals. Each note is tied to a task — the circle on the left mirrors that task's status so you can see at a glance which topics you've already covered.",
+        side: "right",
+        align: "start",
+      },
+    },
+    {
+      element: "#tour-study-notes-generate",
+      popover: {
+        title: "Generate Notes from Tasks",
+        description:
+          "Notes are created from the Weekly Plan or Goals pages. Expand any task, add study context, and hit \"Generate Study Note\" — the AI writes a full structured note for that topic.",
+        side: "bottom",
+        align: "center",
       },
     },
   ],

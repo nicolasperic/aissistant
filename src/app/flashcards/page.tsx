@@ -9,6 +9,7 @@ import { StudyModal, type SessionResult } from "@/components/flashcards/study-mo
 import { FlashcardForm } from "@/components/flashcards/flashcard-form";
 import { Play, Pencil, Trash2, ChevronRight, Layers } from "lucide-react";
 import type { Flashcard, Goal } from "@prisma/client";
+import { TourButton } from "@/components/layout/tour-button";
 
 // Collect a goal's id and all descendant ids from a flat list
 function getDescendantIds(goalId: string, goals: Goal[]): string[] {
@@ -151,15 +152,18 @@ export default function FlashcardsPage() {
           <h1 className="text-2xl font-bold">Flashcards</h1>
           <p className="text-muted-foreground">Active recall sessions for exam prep</p>
         </div>
-        <FlashcardForm
-          goals={goals}
-          onSubmit={handleCreate}
-          defaultGoalId={selectedGoalId}
-        />
+        <div className="flex items-center gap-2">
+          <TourButton tourId="flashcards" autoStart={cards.length === 0} />
+          <FlashcardForm
+            goals={goals}
+            onSubmit={handleCreate}
+            defaultGoalId={selectedGoalId}
+          />
+        </div>
       </div>
 
       {/* Goal scope selector */}
-      <div className="rounded-lg border bg-card p-4 space-y-4">
+      <div id="tour-flashcards-scope" className="rounded-lg border bg-card p-4 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 space-y-1">
             <label className="text-sm font-medium">Study scope</label>
@@ -184,7 +188,7 @@ export default function FlashcardsPage() {
         </div>
 
         {/* Scope stats + start button */}
-        <div className="flex items-center justify-between pt-1 border-t">
+        <div id="tour-flashcards-session" className="flex items-center justify-between pt-1 border-t">
           <div className="flex items-center gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold">{scopeStats.total}</div>
@@ -220,7 +224,7 @@ export default function FlashcardsPage() {
       </div>
 
       {/* Card manager */}
-      <Tabs defaultValue="all">
+      <Tabs id="tour-flashcards-manage" defaultValue="all">
         <TabsList>
           <TabsTrigger value="all">
             All cards
