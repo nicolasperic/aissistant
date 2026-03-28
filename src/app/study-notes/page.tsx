@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
-import { BookOpen, ChevronRight, Circle, Clock, Layers, Loader2 } from "lucide-react";
+import { BookOpen, ChevronRight, Circle, Clock, GripVertical, Layers, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TourButton } from "@/components/layout/tour-button";
 import { format } from "date-fns";
@@ -24,6 +24,7 @@ const priorityColors: Record<string, string> = {
 interface StudyNoteListItem {
   id: string;
   title: string;
+  position: number;
   createdAt: string;
   _count: { flashcards: number };
   task: {
@@ -65,19 +66,79 @@ function groupByQuarterly(notes: StudyNoteListItem[]): QuarterlyGroup[] {
 }
 
 export default function StudyNotesPage() {
-  const [groups, setGroups] = useState<QuarterlyGroup[]>([]);
+  const [notes, setNotes] = useState<StudyNoteListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  // Refs mirror state so handlers have stable non-stale access
+  const draggingIdRef = useRef<string | null>(null);
+  const dragOverIdRef = useRef<string | null>(null);
+
+  const groups = useMemo(() => groupByQuarterly(notes), [notes]);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/study-notes");
-    const notes: StudyNoteListItem[] = await res.json();
-    setGroups(groupByQuarterly(notes));
+    const data: StudyNoteListItem[] = await res.json();
+    setNotes(data);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleDragStart = useCallback((id: string) => {
+    draggingIdRef.current = id;
+    setDraggingId(id);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    dragOverIdRef.current = id;
+    setDragOverId(id);
+  }, []);
+
+  const handleDrop = useCallback((groupId: string) => {
+    const fromId = draggingIdRef.current;
+    const toId = dragOverIdRef.current;
+    if (!fromId || !toId || fromId === toId) return;
+
+    setNotes((prev) => {
+      const fromIndex = prev.findIndex((n) => n.id === fromId);
+      const toIndex = prev.findIndex((n) => n.id === toId);
+
+      // Only allow reorder within the same group
+      const fromGroup = findQuarterlyAncestor(prev[fromIndex]?.task.goal)?.id ?? "uncategorized";
+      const toGroup = findQuarterlyAncestor(prev[toIndex]?.task.goal)?.id ?? "uncategorized";
+      if (fromGroup !== toGroup || fromGroup !== groupId) return prev;
+
+      const updated = [...prev];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+
+      // Persist new order
+      const orderedIds = updated.map((n) => n.id);
+      fetch("/api/study-notes/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: orderedIds }),
+      });
+
+      return updated;
+    });
+
+    draggingIdRef.current = null;
+    dragOverIdRef.current = null;
+    setDraggingId(null);
+    setDragOverId(null);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    draggingIdRef.current = null;
+    dragOverIdRef.current = null;
+    setDraggingId(null);
+    setDragOverId(null);
+  }, []);
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -105,11 +166,19 @@ export default function StudyNotesPage() {
               </h2>
               <div className="divide-y rounded-lg border">
                 {group.notes.map((note) => (
-                  <Link
+                  <div
                     key={note.id}
-                    href={`/study-notes/${note.id}`}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                    draggable
+                    onDragStart={() => handleDragStart(note.id)}
+                    onDragOver={(e) => handleDragOver(e, note.id)}
+                    onDrop={() => handleDrop(group.id)}
+                    onDragEnd={handleDragEnd}
+                    className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors first:rounded-t-lg last:rounded-b-lg
+                      ${draggingId === note.id ? "opacity-40" : ""}
+                      ${dragOverId === note.id && dragOverId !== draggingId ? "border-t-2 border-primary" : ""}
+                    `}
                   >
+                    <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/50 cursor-grab active:cursor-grabbing" />
                     {note.task.status === "COMPLETED" ? (
                       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -119,38 +188,47 @@ export default function StudyNotesPage() {
                     ) : (
                       <Circle className={`h-5 w-5 shrink-0 ${priorityColors[note.task.priority] ?? "text-gray-500"}`} />
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{note.title}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        {note.task.scheduledDate && (
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(note.task.scheduledDate), "MMM d")}
-                          </span>
-                        )}
-                        {note.task.estimatedMinutes && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {note.task.estimatedMinutes}m
-                          </span>
-                        )}
-                        {note.task.goal && (
-                          <Badge variant="outline" className="text-xs h-5">
-                            {note.task.goal.title}
+                    <Link
+                      href={`/study-notes/${note.id}`}
+                      className="flex-1 min-w-0 flex items-center gap-3"
+                      onClick={(e) => {
+                        // Prevent navigation if the user was dragging
+                        if (draggingIdRef.current) e.preventDefault();
+                      }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{note.title}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {note.task.scheduledDate && (
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(note.task.scheduledDate), "MMM d")}
+                            </span>
+                          )}
+                          {note.task.estimatedMinutes && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              {note.task.estimatedMinutes}m
+                            </span>
+                          )}
+                          {note.task.goal && (
+                            <Badge variant="outline" className="text-xs h-5">
+                              {note.task.goal.title}
+                            </Badge>
+                          )}
+                          <Badge variant="secondary" className={`text-xs h-5 ${priorityColors[note.task.priority] ?? "text-gray-500"}`}>
+                            {note.task.priority}
                           </Badge>
-                        )}
-                        <Badge variant="secondary" className={`text-xs h-5 ${priorityColors[note.task.priority] ?? "text-gray-500"}`}>
-                          {note.task.priority}
-                        </Badge>
-                        {note._count.flashcards > 0 && (
-                          <span className="flex items-center gap-1 text-xs text-primary">
-                            <Layers className="h-3 w-3" />
-                            {note._count.flashcards} Flashcards
-                          </span>
-                        )}
+                          {note._count.flashcards > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-primary">
+                              <Layers className="h-3 w-3" />
+                              {note._count.flashcards} Flashcards
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  </Link>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    </Link>
+                  </div>
                 ))}
               </div>
             </div>
