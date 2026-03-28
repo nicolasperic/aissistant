@@ -24,6 +24,7 @@ import type { Goal } from "@prisma/client";
 
 type GoalFormData = {
   title: string;
+  shortName: string;
   description: string;
   type: string;
   startDate: string;
@@ -47,6 +48,7 @@ export function GoalForm({
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<GoalFormData>({
     title: "",
+    shortName: "",
     description: "",
     type: "MONTHLY",
     startDate: new Date().toISOString().split("T")[0],
@@ -62,6 +64,7 @@ export function GoalForm({
       await onSubmit(form);
       setForm({
         title: "",
+        shortName: "",
         description: "",
         type: "MONTHLY",
         startDate: new Date().toISOString().split("T")[0],
@@ -95,6 +98,15 @@ export function GoalForm({
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
+            />
+          </div>
+          <div>
+            <Label htmlFor="shortName">Short Name <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input
+              id="shortName"
+              value={form.shortName}
+              onChange={(e) => setForm({ ...form, shortName: e.target.value })}
+              placeholder="e.g. Front-End Expert"
             />
           </div>
           <div>

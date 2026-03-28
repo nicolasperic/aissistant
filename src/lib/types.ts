@@ -2,7 +2,7 @@ import type { Goal, Task, Event, WeeklyReview, Reward, UserStats, ProgressSnapsh
 
 export type GoalWithRelations = Goal & {
   children?: GoalWithRelations[];
-  parent?: Goal | null;
+  parent?: GoalWithRelations | null;
   tasks?: Task[];
 };
 

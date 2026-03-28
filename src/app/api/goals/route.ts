@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     include: {
       children: true,
       tasks: true,
-      parent: true,
+      parent: { include: { parent: true } },
     },
     orderBy: { position: "desc" },
   });
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
   const goal = await db.goal.create({
     data: {
       title: body.title,
+      shortName: body.shortName || null,
       description: body.description,
       type: body.type,
       startDate: new Date(body.startDate),
@@ -57,6 +58,7 @@ export async function PUT(req: NextRequest) {
     where: { id: body.id },
     data: {
       title: body.title,
+      shortName: body.shortName !== undefined ? body.shortName || null : undefined,
       description: body.description,
       type: body.type,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
@@ -69,6 +71,7 @@ export async function PUT(req: NextRequest) {
     include: {
       children: true,
       tasks: true,
+      parent: { include: { parent: true } },
     },
   });
 

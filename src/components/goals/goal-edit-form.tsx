@@ -24,6 +24,7 @@ import type { GoalWithRelations } from "@/lib/types";
 type GoalEditData = {
   id: string;
   title: string;
+  shortName: string;
   description: string;
   type: string;
   startDate: string;
@@ -49,6 +50,7 @@ export function GoalEditForm({
   const [form, setForm] = useState<GoalEditData>({
     id: goal.id,
     title: goal.title,
+    shortName: goal.shortName || "",
     description: goal.description || "",
     type: goal.type,
     startDate: new Date(goal.startDate).toISOString().split("T")[0],
@@ -61,6 +63,7 @@ export function GoalEditForm({
     setForm({
       id: goal.id,
       title: goal.title,
+      shortName: goal.shortName || "",
       description: goal.description || "",
       type: goal.type,
       startDate: new Date(goal.startDate).toISOString().split("T")[0],
@@ -100,6 +103,15 @@ export function GoalEditForm({
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-goal-shortname">Short Name <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input
+              id="edit-goal-shortname"
+              value={form.shortName}
+              onChange={(e) => setForm({ ...form, shortName: e.target.value })}
+              placeholder="e.g. Front-End Expert"
             />
           </div>
           <div>

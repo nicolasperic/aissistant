@@ -32,6 +32,7 @@ enum TaskPriority {
 model Goal {
   id          String    @id @default(cuid())
   title       String
+  shortName   String?
   description String?
   type        GoalType
   startDate   DateTime

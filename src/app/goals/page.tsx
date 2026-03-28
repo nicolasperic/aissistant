@@ -63,6 +63,7 @@ export default function GoalsPage() {
       body: JSON.stringify({
         id: data.id,
         title: data.title,
+        shortName: data.shortName || null,
         description: data.description || null,
         type: data.type,
         startDate: data.startDate,

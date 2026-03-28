@@ -15,6 +15,12 @@ const typeColors: Record<string, string> = {
   WEEKLY: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
 };
 
+function findQuarterlyAncestor(goal: GoalWithRelations): GoalWithRelations | null {
+  if (!goal.parent) return null;
+  if (goal.parent.type === "QUARTERLY") return goal.parent;
+  return findQuarterlyAncestor(goal.parent);
+}
+
 export function GoalCard({
   goal,
   onEdit,
@@ -24,15 +30,25 @@ export function GoalCard({
   onEdit?: (goal: GoalWithRelations) => void;
   onDelete?: (id: string) => void;
 }) {
+  const quarterlyAncestor = goal.type !== "QUARTERLY" && goal.type !== "YEARLY"
+    ? findQuarterlyAncestor(goal)
+    : null;
+  const quarterlyLabel = quarterlyAncestor?.shortName || null;
+
   return (
     <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="space-y-1">
           <CardTitle className="text-base font-semibold">{goal.title}</CardTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Badge variant="secondary" className={typeColors[goal.type]}>
               {goal.type}
             </Badge>
+            {quarterlyLabel && (
+              <Badge variant="secondary" className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                {quarterlyLabel}
+              </Badge>
+            )}
             {goal.category && (
               <Badge variant="outline">{goal.category}</Badge>
             )}
