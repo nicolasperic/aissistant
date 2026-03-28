@@ -301,7 +301,7 @@ export default function StudyNotePage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky -top-6 z-10 -mx-6 px-6 border-b bg-background/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl py-3 flex items-center gap-3">
+        <div className="py-3 flex items-center gap-3 pr-8">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -398,7 +398,7 @@ export default function StudyNotePage() {
       </div>
 
       {/* Content + ToC */}
-      <div className="mx-auto max-w-5xl py-8 flex gap-8">
+      <div className="py-8 flex gap-8 pr-8">
         {/* ToC sidebar with bookmark controls */}
         {!editing && headings.length > 0 && (
           <aside className="hidden lg:block w-48 shrink-0">

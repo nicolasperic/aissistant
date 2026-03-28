@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Target,
@@ -13,8 +14,11 @@ import {
   Sparkles,
   Layers,
   BookOpen,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -30,19 +34,81 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved === "true") setCollapsed(true);
+    setMounted(true);
+  }, []);
+
+  function toggle() {
+    setCollapsed((v) => {
+      localStorage.setItem("sidebar-collapsed", String(!v));
+      return !v;
+    });
+  }
 
   return (
-    <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:bg-sidebar">
-      <div className="flex h-14 items-center gap-2 border-b px-6">
-        <Sparkles className="h-5 w-5 text-primary" />
-        <span className="text-lg font-bold">AIssistant</span>
+    <aside
+      className={cn(
+        "hidden md:flex md:flex-col md:border-r md:bg-sidebar",
+        mounted && "transition-all duration-200",
+        collapsed ? "md:w-14" : "md:w-64"
+      )}
+    >
+      {/* Logo */}
+      <div className="flex h-14 items-center border-b shrink-0 gap-2 px-4">
+        {!collapsed && (
+          <>
+            <Sparkles className="h-5 w-5 text-primary shrink-0" />
+            <span className="text-lg font-bold flex-1">AIssistant</span>
+          </>
+        )}
+        <button
+          onClick={toggle}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={cn(
+            "flex items-center justify-center rounded-full border bg-background text-muted-foreground hover:text-foreground transition-colors shrink-0",
+            collapsed ? "h-8 w-8 mx-auto" : "h-6 w-6 ml-auto"
+          )}
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="h-4 w-4" />
+          ) : (
+            <PanelLeftClose className="h-3.5 w-3.5" />
+          )}
+        </button>
       </div>
-      <nav className="flex-1 space-y-1 p-4">
+
+      {/* Nav items */}
+      <nav className="flex-1 space-y-1 p-2">
         {navItems.map((item) => {
           const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href);
+            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+
+          if (collapsed) {
+            return (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex items-center justify-center rounded-lg p-2 transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">{item.label}</TooltipContent>
+              </Tooltip>
+            );
+          }
+
           return (
             <Link
               key={item.href}
@@ -60,6 +126,7 @@ export function Sidebar() {
           );
         })}
       </nav>
+
     </aside>
   );
 }
