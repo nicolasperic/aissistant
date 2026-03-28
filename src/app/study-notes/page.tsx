@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BookOpen, ChevronDown, ChevronRight, Circle, Clock, GripVertical, Layers, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TourButton } from "@/components/layout/tour-button";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { format } from "date-fns";
 
 interface GoalNode {
@@ -69,7 +70,7 @@ export default function StudyNotesPage() {
   const [notes, setNotes] = useState<StudyNoteListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [groupOrder, setGroupOrder] = useState<string[]>([]);
+  const [groupOrder, setGroupOrder] = useLocalStorage<string[]>("study-notes-group-order", []);
 
   // Note-level drag state
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -82,8 +83,6 @@ export default function StudyNotesPage() {
   const [groupDragOverId, setGroupDragOverId] = useState<string | null>(null);
   const groupDraggingIdRef = useRef<string | null>(null);
   const groupDragOverIdRef = useRef<string | null>(null);
-  // Set on mousedown of the group grip handle — prevents accidental group drags from title clicks
-  const groupDragPendingRef = useRef(false);
 
   const groups = useMemo(() => groupByQuarterly(notes), [notes]);
 
@@ -98,14 +97,18 @@ export default function StudyNotesPage() {
     return ordered;
   }, [groups, groupOrder]);
 
-  // Initialize collapsed state and group order once on first load
+  // Collapse all groups once on first load; seed groupOrder from groups only if localStorage was empty
   const initializedRef = useRef(false);
   useEffect(() => {
     if (groups.length > 0 && !initializedRef.current) {
       initializedRef.current = true;
       setCollapsedGroups(new Set(groups.map((g) => g.id)));
-      setGroupOrder(groups.map((g) => g.id));
+      if (groupOrder.length === 0) {
+        setGroupOrder(groups.map((g) => g.id));
+      }
     }
+  // groupOrder intentionally omitted — we only want to seed it when it's empty on first mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups]);
 
   const toggleGroup = useCallback((groupId: string) => {
@@ -137,14 +140,15 @@ export default function StudyNotesPage() {
 
   const handleDragOver = useCallback((e: React.DragEvent, id: string) => {
     e.preventDefault();
-    e.stopPropagation(); // prevent bubbling to group drag handler
-    if (groupDraggingIdRef.current) return;
+    if (groupDraggingIdRef.current) return; // let event bubble to list container
+    e.stopPropagation();
     dragOverIdRef.current = id;
     setDragOverId(id);
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent, groupId: string) => {
-    e.stopPropagation(); // prevent bubbling to group drop handler
+    if (groupDraggingIdRef.current) return;
+    e.stopPropagation();
     const fromId = draggingIdRef.current;
     const toId = dragOverIdRef.current;
     if (!fromId || !toId || fromId === toId) return;
@@ -186,19 +190,32 @@ export default function StudyNotesPage() {
   // ── Group-level drag handlers ─────────────────────────────────────────────
 
   const handleGroupDragStart = useCallback((e: React.DragEvent, id: string) => {
-    if (!groupDragPendingRef.current) return;
     e.stopPropagation();
     groupDraggingIdRef.current = id;
     setGroupDraggingId(id);
   }, []);
 
-  const handleGroupDragOver = useCallback((e: React.DragEvent, id: string) => {
+  // Walk up the DOM from the drag target to find which group is hovered.
+  // This avoids relying on per-element dragenter which misfires on child elements.
+  const findGroupIdFromTarget = useCallback((target: EventTarget | null): string | null => {
+    let el = target as HTMLElement | null;
+    while (el) {
+      const id = el.dataset?.groupId;
+      if (id) return id;
+      el = el.parentElement;
+    }
+    return null;
+  }, []);
+
+  const handleListDragOver = useCallback((e: React.DragEvent) => {
     if (!groupDraggingIdRef.current) return;
     e.preventDefault();
-    e.stopPropagation();
+    const id = findGroupIdFromTarget(e.target);
+    if (!id || id === groupDraggingIdRef.current) return;
+    if (groupDragOverIdRef.current === id) return;
     groupDragOverIdRef.current = id;
     setGroupDragOverId(id);
-  }, []);
+  }, [findGroupIdFromTarget]);
 
   const handleGroupDrop = useCallback((e: React.DragEvent) => {
     e.stopPropagation();
@@ -213,26 +230,12 @@ export default function StudyNotesPage() {
         if (fromIndex === -1 || toIndex === -1) return prev;
         updated.splice(fromIndex, 1);
         updated.splice(toIndex, 0, fromId);
-
-        // Persist: goals sorted desc by position, so first item = highest value
-        const updates = updated
-          .filter((id) => id !== "uncategorized")
-          .map((id, index) => ({ id, position: updated.length - index }));
-        if (updates.length > 0) {
-          fetch("/api/goals/reorder", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ updates }),
-          });
-        }
-
         return updated;
       });
     }
 
     groupDraggingIdRef.current = null;
     groupDragOverIdRef.current = null;
-    groupDragPendingRef.current = false;
     setGroupDraggingId(null);
     setGroupDragOverId(null);
   }, []);
@@ -240,7 +243,6 @@ export default function StudyNotesPage() {
   const handleGroupDragEnd = useCallback(() => {
     groupDraggingIdRef.current = null;
     groupDragOverIdRef.current = null;
-    groupDragPendingRef.current = false;
     setGroupDraggingId(null);
     setGroupDragOverId(null);
   }, []);
@@ -285,17 +287,21 @@ export default function StudyNotesPage() {
         ) : orderedGroups.length === 0 ? (
           <p className="text-muted-foreground">No study notes yet. Generate one from a task.</p>
         ) : (
-          <div id="tour-study-notes-list" className="space-y-8">
+          <div
+            id="tour-study-notes-list"
+            className="space-y-8"
+            onDragOver={handleListDragOver}
+            onDrop={handleGroupDrop}
+          >
             {orderedGroups.map((group) => {
               const isCollapsed = collapsedGroups.has(group.id);
               return (
                 <div
                   key={group.id}
                   id={`group-${group.id}`}
+                  data-group-id={group.id}
                   draggable
                   onDragStart={(e) => handleGroupDragStart(e, group.id)}
-                  onDragOver={(e) => handleGroupDragOver(e, group.id)}
-                  onDrop={handleGroupDrop}
                   onDragEnd={handleGroupDragEnd}
                   className={`scroll-mt-20 ${
                     groupDraggingId === group.id ? "opacity-40" : ""
@@ -306,11 +312,7 @@ export default function StudyNotesPage() {
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <div
-                      className="shrink-0 cursor-grab active:cursor-grabbing"
-                      onMouseDown={() => { groupDragPendingRef.current = true; }}
-                      onMouseUp={() => { groupDragPendingRef.current = false; }}
-                    >
+                    <div className="shrink-0 cursor-grab active:cursor-grabbing">
                       <GripVertical className="h-4 w-4 text-muted-foreground/50" />
                     </div>
                     <button
