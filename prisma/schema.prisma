@@ -41,6 +41,7 @@ model Goal {
   parent      Goal?     @relation("GoalHierarchy", fields: [parentId], references: [id])
   children    Goal[]    @relation("GoalHierarchy")
   tasks       Task[]
+  events      Event[]
   category    String?
   notes       String?
   position    Int       @default(0)
@@ -88,6 +89,7 @@ model Event {
   category    String?
   url         String?
   goalId      String?
+  goal        Goal?    @relation(fields: [goalId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

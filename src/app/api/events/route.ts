@@ -50,7 +50,7 @@ export async function PUT(req: NextRequest) {
       eventDate: body.eventDate ? parseDateOnly(body.eventDate) : undefined,
       category: body.category,
       url: body.url,
-      goalId: body.goalId,
+      goalId: body.goalId || null,
     },
   });
 

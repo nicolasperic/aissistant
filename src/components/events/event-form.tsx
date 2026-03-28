@@ -29,6 +29,7 @@ type EventFormData = {
   eventDate: string;
   category: string;
   url: string;
+  goalId: string;
 };
 
 const DEFAULT_FORM: EventFormData = {
@@ -37,7 +38,14 @@ const DEFAULT_FORM: EventFormData = {
   eventDate: "",
   category: "certification",
   url: "",
+  goalId: "",
 };
+
+interface GoalOption {
+  id: string;
+  title: string;
+  type: string;
+}
 
 export function EventForm({
   onSubmit,
@@ -54,9 +62,19 @@ export function EventForm({
   const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<EventFormData>(DEFAULT_FORM);
+  const [goals, setGoals] = useState<GoalOption[]>([]);
 
   const isOpen = isControlled ? controlledOpen! : internalOpen;
   const setIsOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
+
+  useEffect(() => {
+    fetch("/api/goals")
+      .then((r) => r.json())
+      .then((data: GoalOption[]) =>
+        setGoals(data.filter((g) => g.type === "QUARTERLY"))
+      )
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -67,6 +85,7 @@ export function EventForm({
         eventDate: format(new Date(initialData.eventDate), "yyyy-MM-dd"),
         category: initialData.category ?? "certification",
         url: initialData.url ?? "",
+        goalId: initialData.goalId ?? "",
       });
     } else {
       setForm(DEFAULT_FORM);
@@ -145,6 +164,27 @@ export function EventForm({
               </Select>
             </div>
           </div>
+          {goals.length > 0 && (
+            <div>
+              <Label>Goal (optional)</Label>
+              <Select
+                value={form.goalId}
+                onValueChange={(v) => setForm({ ...form, goalId: v === "_none" ? "" : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="None" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">None</SelectItem>
+                  {goals.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label htmlFor="event-url">URL (optional)</Label>
             <Input

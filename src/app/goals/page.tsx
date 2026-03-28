@@ -85,15 +85,11 @@ export default function GoalsPage() {
 
     const reordered = arrayMove(filteredGoals, oldIndex, newIndex);
 
-    // Stable swap: reuse the position values already assigned to these visible goals
-    // (sorted DESC), re-assign them in the new visual order. Hidden goals are unaffected.
-    const sortedPositions = [...filteredGoals]
-      .map((g) => g.position)
-      .sort((a, b) => b - a);
-
+    // Assign fresh sequential positions (highest = first) so duplicates never cause stale swaps.
+    // Hidden goals (pending filter) are not included in updates and keep their own positions.
     const updates = reordered.map((goal, i) => ({
       id: goal.id,
-      position: sortedPositions[i],
+      position: reordered.length - i,
     }));
 
     // Optimistic update — no reload needed
