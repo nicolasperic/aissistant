@@ -10,7 +10,9 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Layers, Loader2, RefreshCw, Trash2, Pencil, Check, X, Bookmark } from "lucide-react";
+import { ArrowLeft, Layers, Loader2, Play, RefreshCw, Trash2, Pencil, Check, X, Bookmark } from "lucide-react";
+import { StudyModal, type SessionResult } from "@/components/flashcards/study-modal";
+import type { Flashcard } from "@prisma/client";
 import type { Components } from "react-markdown";
 
 function slugify(children: React.ReactNode): string {
@@ -44,6 +46,7 @@ interface StudyNote {
   goalId: string | null;
   bookmarkPosition: string | null;
   createdAt: string;
+  _count: { flashcards: number };
   task: {
     id: string;
     title: string;
@@ -58,6 +61,9 @@ export default function StudyNotePage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [flashcardsCount, setFlashcardsCount] = useState<number | null>(null);
+  const [sessionCards, setSessionCards] = useState<Flashcard[]>([]);
+  const [sessionOpen, setSessionOpen] = useState(false);
+  const [loadingSession, setLoadingSession] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
@@ -71,6 +77,9 @@ export default function StudyNotePage() {
       const data: StudyNote = await res.json();
       setNote(data);
       setBookmarkPosition(data.bookmarkPosition);
+      if (data._count.flashcards > 0) {
+        setFlashcardsCount(data._count.flashcards);
+      }
     }
     setLoading(false);
   }, [id]);
@@ -117,6 +126,21 @@ export default function StudyNotePage() {
       setFlashcardsCount(data.count);
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleStartSession() {
+    setLoadingSession(true);
+    try {
+      const res = await fetch(`/api/flashcards?studyNoteId=${id}`);
+      const cards: Flashcard[] = await res.json();
+      const now = new Date();
+      const due = cards.filter((c) => !c.nextReviewAt || new Date(c.nextReviewAt) <= now);
+      const notDue = cards.filter((c) => c.nextReviewAt && new Date(c.nextReviewAt) > now);
+      setSessionCards([...due, ...notDue]);
+      setSessionOpen(true);
+    } finally {
+      setLoadingSession(false);
     }
   }
 
@@ -314,25 +338,48 @@ export default function StudyNotePage() {
           <div className="flex items-center gap-2 shrink-0">
             {!editing ? (
               <>
-                {flashcardsCount !== null && (
-                  <Badge variant="secondary" className="text-xs">
-                    {flashcardsCount} cards created
-                  </Badge>
+                {flashcardsCount !== null ? (
+                  <>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleStartSession}
+                      disabled={loadingSession}
+                      className="gap-1.5"
+                    >
+                      {loadingSession ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Play className="h-3.5 w-3.5" />
+                      )}
+                      Study ({flashcardsCount})
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled
+                      className="gap-1.5 text-muted-foreground"
+                    >
+                      <Layers className="h-3.5 w-3.5" />
+                      Flashcards created
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateFlashcards}
+                    disabled={generating}
+                    className="gap-1.5"
+                  >
+                    {generating ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Layers className="h-3.5 w-3.5" />
+                    )}
+                    Generate Flashcards
+                  </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateFlashcards}
-                  disabled={generating || flashcardsCount !== null}
-                  className="gap-1.5"
-                >
-                  {generating ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Layers className="h-3.5 w-3.5" />
-                  )}
-                  {flashcardsCount !== null ? "Flashcards created" : "Generate Flashcards"}
-                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -459,6 +506,13 @@ export default function StudyNotePage() {
           )}
         </div>
       </div>
+
+      <StudyModal
+        open={sessionOpen}
+        onClose={() => setSessionOpen(false)}
+        cards={sessionCards}
+        onSessionComplete={() => fetchNote()}
+      />
     </div>
   );
 }

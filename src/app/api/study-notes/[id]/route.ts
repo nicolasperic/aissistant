@@ -9,7 +9,10 @@ export async function GET(
 
   const note = await db.studyNote.findUnique({
     where: { id },
-    include: { task: { include: { goal: true } } },
+    include: {
+      _count: { select: { flashcards: true } },
+      task: { include: { goal: true } },
+    },
   });
 
   if (!note) {

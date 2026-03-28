@@ -9,11 +9,14 @@ export async function GET(req: NextRequest) {
   const due = searchParams.get("due");
 
   const goalIds = searchParams.get("goalIds");
+  const studyNoteId = searchParams.get("studyNoteId");
 
   const where: Record<string, unknown> = {};
   if (topic) where.topic = topic;
   if (examCode) where.examCode = examCode;
-  if (goalIds) {
+  if (studyNoteId) {
+    where.studyNoteId = studyNoteId;
+  } else if (goalIds) {
     where.goalId = { in: goalIds.split(",") };
   } else if (goalId) {
     where.goalId = goalId;

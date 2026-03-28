@@ -58,6 +58,7 @@ ${note.content}`;
           hint: card.hint ?? null,
           topic,
           goalId,
+          studyNoteId,
         },
       })
     )

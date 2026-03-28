@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { BookOpen, ChevronRight, Circle, Loader2 } from "lucide-react";
+import { BookOpen, ChevronRight, Circle, Clock, Layers, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { TourButton } from "@/components/layout/tour-button";
+import { format } from "date-fns";
 
 interface GoalNode {
   id: string;
@@ -23,9 +25,12 @@ interface StudyNoteListItem {
   id: string;
   title: string;
   createdAt: string;
+  _count: { flashcards: number };
   task: {
     status: string;
     priority: string;
+    scheduledDate: string | null;
+    estimatedMinutes: number | null;
     goal: GoalNode | null;
   };
 }
@@ -114,7 +119,36 @@ export default function StudyNotesPage() {
                     ) : (
                       <Circle className={`h-5 w-5 shrink-0 ${priorityColors[note.task.priority] ?? "text-gray-500"}`} />
                     )}
-                    <span className="text-sm font-medium flex-1">{note.title}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{note.title}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {note.task.scheduledDate && (
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(note.task.scheduledDate), "MMM d")}
+                          </span>
+                        )}
+                        {note.task.estimatedMinutes && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {note.task.estimatedMinutes}m
+                          </span>
+                        )}
+                        {note.task.goal && (
+                          <Badge variant="outline" className="text-xs h-5">
+                            {note.task.goal.title}
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className={`text-xs h-5 ${priorityColors[note.task.priority] ?? "text-gray-500"}`}>
+                          {note.task.priority}
+                        </Badge>
+                        {note._count.flashcards > 0 && (
+                          <span className="flex items-center gap-1 text-xs text-primary">
+                            <Layers className="h-3 w-3" />
+                            {note._count.flashcards} Flashcards
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   </Link>
                 ))}

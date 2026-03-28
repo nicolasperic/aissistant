@@ -67,15 +67,16 @@ model Task {
 }
 
 model StudyNote {
-  id               String   @id @default(cuid())
+  id               String      @id @default(cuid())
   title            String
   content          String
-  taskId           String   @unique
-  task             Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId           String      @unique
+  task             Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
   goalId           String?
   bookmarkPosition String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  flashcards       Flashcard[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }
 
 model Event {
@@ -158,6 +159,8 @@ model Flashcard {
   topic          String
   examCode       String?
   goalId         String?
+  studyNoteId    String?
+  studyNote      StudyNote?  @relation(fields: [studyNoteId], references: [id], onDelete: SetNull)
   correctCount   Int         @default(0)
   incorrectCount Int         @default(0)
   lastReviewedAt DateTime?
