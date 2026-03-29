@@ -6,7 +6,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, AlertCircle, Zap, Eye } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Zap, Eye, ChevronLeft } from "lucide-react";
 import type { Flashcard } from "@prisma/client";
 
 type CardRating = "EASY" | "MEDIUM" | "HARD" | "MISSED";
@@ -145,7 +145,16 @@ export function StudyModal({ open, onClose, cards, onSessionComplete }: StudyMod
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-primary">Answer</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium uppercase tracking-wide text-primary">Answer</p>
+                    <button
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={(e) => { e.stopPropagation(); setFlipped(false); }}
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                      Question
+                    </button>
+                  </div>
                   <p className="text-base leading-relaxed">{current.answer}</p>
                 </div>
               )}

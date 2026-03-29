@@ -86,6 +86,13 @@ export default function FlashcardsPage() {
     return { total: scoped.length, due: due.length };
   }, [cards, selectedGoalId, goals]);
 
+  const goalsWithCards = useMemo(() => {
+    const cardGoalIds = new Set(cards.map((c) => c.goalId).filter(Boolean));
+    return goals.filter((g) =>
+      getDescendantIds(g.id, goals).some((id) => cardGoalIds.has(id))
+    );
+  }, [goals, cards]);
+
   const selectedGoal = goals.find((g) => g.id === selectedGoalId);
 
   const handleStartSession = (dueOnly: boolean) => {
@@ -177,7 +184,7 @@ export default function FlashcardsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All flashcards</SelectItem>
-              {goals.map((g) => (
+              {goalsWithCards.map((g) => (
                 <SelectItem key={g.id} value={g.id}>
                   <span className="text-muted-foreground text-xs mr-1">[{g.type}]</span>
                   {g.title}
