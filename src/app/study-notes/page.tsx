@@ -105,6 +105,11 @@ export default function StudyNotesPage() {
       setCollapsedGroups(new Set(groups.map((g) => g.id)));
       if (groupOrder.length === 0) {
         setGroupOrder(groups.map((g) => g.id));
+      } else {
+        const missing = groups.map((g) => g.id).filter((id) => !groupOrder.includes(id));
+        if (missing.length > 0) {
+          setGroupOrder((prev) => [...prev, ...missing]);
+        }
       }
     }
   // groupOrder intentionally omitted — we only want to seed it when it's empty on first mount
