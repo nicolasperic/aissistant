@@ -84,7 +84,7 @@ export function GoalCard({
       </CardHeader>
       <CardContent>
         {goal.description && (
-          <p className="mb-3 text-sm text-muted-foreground">{goal.description}</p>
+          <p className="mb-3 text-xs text-muted-foreground">{goal.description}</p>
         )}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
