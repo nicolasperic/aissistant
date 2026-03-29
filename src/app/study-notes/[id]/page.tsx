@@ -10,10 +10,30 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Layers, Loader2, Play, RefreshCw, Trash2, Pencil, Check, X, Bookmark } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Layers, Loader2, Play, RefreshCw, Trash2, Pencil, Check, X, Bookmark } from "lucide-react";
 import { StudyModal, type SessionResult } from "@/components/flashcards/study-modal";
 import type { Flashcard } from "@prisma/client";
 import type { Components } from "react-markdown";
+
+interface GoalNode {
+  id: string;
+  title: string;
+  type: string;
+  shortName?: string | null;
+  parent: GoalNode | null;
+}
+
+interface SiblingNote {
+  id: string;
+  title: string;
+  task: { goal: GoalNode | null };
+}
+
+function findQuarterlyAncestor(goal: GoalNode | null): GoalNode | null {
+  if (!goal) return null;
+  if (goal.type === "QUARTERLY") return goal;
+  return findQuarterlyAncestor(goal.parent);
+}
 
 function slugify(children: React.ReactNode): string {
   const text = Array.isArray(children)
@@ -69,6 +89,7 @@ export default function StudyNotePage() {
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [bookmarkPosition, setBookmarkPosition] = useState<string | null>(null);
+  const [allNotes, setAllNotes] = useState<SiblingNote[]>([]);
   const initialScrollDone = useRef(false);
 
   const fetchNote = useCallback(async () => {
@@ -86,6 +107,7 @@ export default function StudyNotePage() {
 
   useEffect(() => {
     fetchNote();
+    fetch("/api/study-notes").then((r) => r.json()).then(setAllNotes);
   }, [fetchNote]);
 
   // Auto-scroll to bookmark on initial load
@@ -103,6 +125,23 @@ export default function StudyNotePage() {
     () => (note ? extractHeadings(note.content) : []),
     [note]
   );
+
+  const { certification, prevNote, nextNote } = useMemo(() => {
+    if (!allNotes.length) return { certification: null, prevNote: null, nextNote: null };
+    const current = allNotes.find((n) => n.id === id);
+    if (!current) return { certification: null, prevNote: null, nextNote: null };
+    const quarterly = findQuarterlyAncestor(current.task.goal);
+    const quarterlyKey = quarterly?.id ?? "uncategorized";
+    const siblings = allNotes.filter(
+      (n) => (findQuarterlyAncestor(n.task.goal)?.id ?? "uncategorized") === quarterlyKey
+    );
+    const idx = siblings.findIndex((n) => n.id === id);
+    return {
+      certification: quarterly,
+      prevNote: idx > 0 ? siblings[idx - 1] : null,
+      nextNote: idx < siblings.length - 1 ? siblings[idx + 1] : null,
+    };
+  }, [allNotes, id]);
 
   async function handleBookmark(slug: string) {
     const next = bookmarkPosition === slug ? null : slug;
@@ -331,9 +370,16 @@ export default function StudyNotePage() {
           </Button>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{note.title}</p>
-            {note.task?.goal && (
-              <p className="text-xs text-muted-foreground truncate">{note.task.goal.title}</p>
-            )}
+            <div className="flex items-center gap-2 mt-0.5">
+              {note.task?.goal && (
+                <p className="text-xs text-muted-foreground truncate">{note.task.goal.title}</p>
+              )}
+              {certification?.shortName && (
+                <Badge variant="secondary" className="text-xs shrink-0 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                  {certification.shortName}
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {!editing ? (
@@ -496,13 +542,67 @@ export default function StudyNotePage() {
               autoFocus
             />
           ) : (
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={markdownComponents}
-            >
-              {note.content}
-            </ReactMarkdown>
+            <>
+              {(prevNote || nextNote) && (
+                <div className="mb-8 pb-6 border-b flex items-center justify-between gap-4">
+                  {prevNote ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/study-notes/${prevNote.id}`)}
+                      className="gap-1.5 max-w-[45%]"
+                    >
+                      <ChevronLeft className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{prevNote.title}</span>
+                    </Button>
+                  ) : <div />}
+                  {nextNote ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/study-notes/${nextNote.id}`)}
+                      className="gap-1.5 max-w-[45%]"
+                    >
+                      <span className="truncate">{nextNote.title}</span>
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    </Button>
+                  ) : <div />}
+                </div>
+              )}
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={markdownComponents}
+              >
+                {note.content}
+              </ReactMarkdown>
+              {(prevNote || nextNote) && (
+                <div className="mt-12 pt-6 border-t flex items-center justify-between gap-4">
+                  {prevNote ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/study-notes/${prevNote.id}`)}
+                      className="gap-1.5 max-w-[45%]"
+                    >
+                      <ChevronLeft className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{prevNote.title}</span>
+                    </Button>
+                  ) : <div />}
+                  {nextNote ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/study-notes/${nextNote.id}`)}
+                      className="gap-1.5 max-w-[45%]"
+                    >
+                      <span className="truncate">{nextNote.title}</span>
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    </Button>
+                  ) : <div />}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

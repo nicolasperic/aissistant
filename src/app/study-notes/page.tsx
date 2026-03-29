@@ -210,7 +210,27 @@ export default function StudyNotesPage() {
   const handleListDragOver = useCallback((e: React.DragEvent) => {
     if (!groupDraggingIdRef.current) return;
     e.preventDefault();
-    const id = findGroupIdFromTarget(e.target);
+    let id = findGroupIdFromTarget(e.target);
+    if (!id) {
+      // Cursor is in empty space (gap between groups, or above/below all groups).
+      // Find the nearest group element by Y position so bottom-to-top drags
+      // that overshoot past the top group still resolve correctly.
+      const groupEls = document.querySelectorAll<HTMLElement>("[data-group-id]");
+      let nearestId: string | null = null;
+      let nearestDist = Infinity;
+      groupEls.forEach((el) => {
+        const gId = el.dataset.groupId!;
+        if (gId === groupDraggingIdRef.current) return;
+        const rect = el.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const dist = Math.abs(e.clientY - midY);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestId = gId;
+        }
+      });
+      id = nearestId;
+    }
     if (!id || id === groupDraggingIdRef.current) return;
     if (groupDragOverIdRef.current === id) return;
     groupDragOverIdRef.current = id;
