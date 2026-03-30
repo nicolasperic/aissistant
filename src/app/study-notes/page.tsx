@@ -97,12 +97,11 @@ export default function StudyNotesPage() {
     return ordered;
   }, [groups, groupOrder]);
 
-  // Collapse all groups once on first load; seed groupOrder from groups only if localStorage was empty
+  // Seed groupOrder from groups only if localStorage was empty; collapse is handled in load()
   const initializedRef = useRef(false);
   useEffect(() => {
     if (groups.length > 0 && !initializedRef.current) {
       initializedRef.current = true;
-      setCollapsedGroups(new Set(groups.map((g) => g.id)));
       if (groupOrder.length === 0) {
         setGroupOrder(groups.map((g) => g.id));
       } else {
@@ -128,6 +127,8 @@ export default function StudyNotesPage() {
   const load = useCallback(async () => {
     const res = await fetch("/api/study-notes");
     const data: StudyNoteListItem[] = await res.json();
+    const computedGroups = groupByQuarterly(data);
+    setCollapsedGroups(new Set(computedGroups.map((g) => g.id)));
     setNotes(data);
     setLoading(false);
   }, []);
