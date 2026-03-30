@@ -139,7 +139,8 @@ export default function StudyNotesPage() {
 
   // ── Note-level drag handlers ─────────────────────────────────────────────
 
-  const handleDragStart = useCallback((id: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
+    e.stopPropagation();
     draggingIdRef.current = id;
     setDraggingId(id);
   }, []);
@@ -364,7 +365,7 @@ export default function StudyNotesPage() {
                         <div
                           key={note.id}
                           draggable
-                          onDragStart={() => handleDragStart(note.id)}
+                          onDragStart={(e) => handleDragStart(e, note.id)}
                           onDragOver={(e) => handleDragOver(e, note.id)}
                           onDrop={(e) => handleDrop(e, group.id)}
                           onDragEnd={handleDragEnd}
