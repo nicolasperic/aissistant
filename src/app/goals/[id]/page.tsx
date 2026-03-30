@@ -17,6 +17,12 @@ import Link from "next/link";
 import { format } from "date-fns";
 import type { GoalWithRelations, TaskWithGoal } from "@/lib/types";
 
+function findQuarterlyAncestor(goal: GoalWithRelations | null | undefined): GoalWithRelations | null {
+  if (!goal) return null;
+  if (goal.type === "QUARTERLY") return goal;
+  return findQuarterlyAncestor(goal.parent);
+}
+
 export default function GoalDetailPage() {
   const params = useParams();
   const [goal, setGoal] = useState<GoalWithRelations | null>(null);
@@ -165,6 +171,14 @@ export default function GoalDetailPage() {
             <span className="text-sm text-muted-foreground">
               {format(new Date(goal.startDate), "MMM d")} - {format(new Date(goal.endDate), "MMM d, yyyy")}
             </span>
+            {(() => {
+              const cert = findQuarterlyAncestor(goal.type === "QUARTERLY" ? null : goal.parent);
+              return cert?.shortName ? (
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                  {cert.shortName}
+                </Badge>
+              ) : null;
+            })()}
           </div>
         </div>
       </div>
