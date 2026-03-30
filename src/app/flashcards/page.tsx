@@ -28,6 +28,13 @@ function goalLabel(goal: Goal, goals: Goal[]): string {
   return `${indent}[${goal.type}] ${goal.title}`;
 }
 
+function getCertAncestor(goal: Goal, goals: Goal[]): Goal | null {
+  if (goal.type === "QUARTERLY") return goal.shortName ? goal : null;
+  if (!goal.parentId) return null;
+  const parent = goals.find((g) => g.id === goal.parentId);
+  return parent ? getCertAncestor(parent, goals) : null;
+}
+
 function getDepth(goal: Goal, goals: Goal[], depth = 0): number {
   if (!goal.parentId) return depth;
   const parent = goals.find((g) => g.id === goal.parentId);
@@ -184,12 +191,20 @@ export default function FlashcardsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All flashcards</SelectItem>
-              {goalsWithCards.map((g) => (
-                <SelectItem key={g.id} value={g.id}>
-                  <span className="text-muted-foreground text-xs mr-1">[{g.type}]</span>
-                  {g.title}
-                </SelectItem>
-              ))}
+              {goalsWithCards.map((g) => {
+                const cert = getCertAncestor(g, goals);
+                return (
+                  <SelectItem key={g.id} value={g.id}>
+                    {cert?.shortName && (
+                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 mr-1">
+                        {cert.shortName}
+                      </Badge>
+                    )}
+                    <span className="text-muted-foreground text-xs mr-1">[{g.type}]</span>
+                    {g.title}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

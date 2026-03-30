@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -103,6 +103,16 @@ export default function PlanPage() {
     setLoading(true);
     loadTasks();
   }, [loadTasks]);
+
+  // Scroll to today's card once after initial load
+  const initialScrollDone = useRef(false);
+  useEffect(() => {
+    if (!loading && !initialScrollDone.current) {
+      initialScrollDone.current = true;
+      const el = document.getElementById("plan-today");
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [loading]);
 
   const handleRequestGenerate = (type: RangeType) => {
     setPendingRangeType(type);
@@ -562,9 +572,8 @@ export default function PlanPage() {
                     return (
                       <Card
                         key={day.toISOString()}
-                        className={
-                          isToday ? "border-primary/50 shadow-sm" : ""
-                        }
+                        id={isToday ? "plan-today" : undefined}
+                        className={`scroll-mt-28 ${isToday ? "border-primary/50 shadow-sm" : ""}`}
                       >
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                           <div className="flex items-center gap-2">
@@ -619,7 +628,8 @@ export default function PlanPage() {
             return (
               <Card
                 key={day.toISOString()}
-                className={isToday ? "border-primary/50 shadow-sm" : ""}
+                id={isToday ? "plan-today" : undefined}
+                className={`scroll-mt-28 ${isToday ? "border-primary/50 shadow-sm" : ""}`}
               >
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <div className="flex items-center gap-2">
