@@ -35,13 +35,17 @@ function findQuarterlyAncestor(goal: GoalNode | null): GoalNode | null {
   return findQuarterlyAncestor(goal.parent);
 }
 
+function extractText(node: React.ReactNode): string {
+  if (typeof node === "string") return node;
+  if (Array.isArray(node)) return node.map(extractText).join("");
+  if (node !== null && typeof node === "object" && "props" in node) {
+    return extractText((node as React.ReactElement).props.children);
+  }
+  return "";
+}
+
 function slugify(children: React.ReactNode): string {
-  const text = Array.isArray(children)
-    ? children.map((c) => (typeof c === "string" ? c : "")).join("")
-    : typeof children === "string"
-    ? children
-    : "";
-  return text
+  return extractText(children)
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
     .trim()
@@ -495,7 +499,7 @@ export default function StudyNotePage() {
         {/* ToC sidebar with bookmark controls */}
         {!editing && headings.length > 0 && (
           <aside className="hidden lg:block w-48 shrink-0">
-            <div className="sticky top-20 space-y-0.5">
+            <div className="sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto space-y-0.5 pr-2">
               <p className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wide">
                 Contents
               </p>
