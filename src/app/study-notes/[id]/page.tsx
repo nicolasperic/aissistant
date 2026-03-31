@@ -10,7 +10,7 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ChevronLeft, ChevronRight, Layers, Loader2, Play, RefreshCw, Trash2, Pencil, Check, X, Bookmark } from "lucide-react";
+import { ArrowLeft, BadgeCheck, ChevronLeft, ChevronRight, Layers, Loader2, Play, RefreshCw, Trash2, Pencil, Check, X, Bookmark } from "lucide-react";
 import { StudyModal, type SessionResult } from "@/components/flashcards/study-modal";
 import type { Flashcard } from "@prisma/client";
 import type { Components } from "react-markdown";
@@ -39,7 +39,8 @@ function extractText(node: React.ReactNode): string {
   if (typeof node === "string") return node;
   if (Array.isArray(node)) return node.map(extractText).join("");
   if (node !== null && typeof node === "object" && "props" in node) {
-    return extractText((node as React.ReactElement).props.children);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return extractText((node as any).props.children);
   }
   return "";
 }
@@ -69,6 +70,7 @@ interface StudyNote {
   content: string;
   goalId: string | null;
   bookmarkPosition: string | null;
+  validated: boolean;
   createdAt: string;
   _count: { flashcards: number };
   task: {
@@ -93,6 +95,7 @@ export default function StudyNotePage() {
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [bookmarkPosition, setBookmarkPosition] = useState<string | null>(null);
+  const [validated, setValidated] = useState(false);
   const [allNotes, setAllNotes] = useState<SiblingNote[]>([]);
   const [allNotesLoading, setAllNotesLoading] = useState(true);
   const initialScrollDone = useRef(false);
@@ -103,6 +106,7 @@ export default function StudyNotePage() {
       const data: StudyNote = await res.json();
       setNote(data);
       setBookmarkPosition(data.bookmarkPosition);
+      setValidated(data.validated);
       if (data._count.flashcards > 0) {
         setFlashcardsCount(data._count.flashcards);
       }
@@ -147,6 +151,16 @@ export default function StudyNotePage() {
       nextNote: idx < siblings.length - 1 ? siblings[idx + 1] : null,
     };
   }, [allNotes, id]);
+
+  async function handleToggleValidated() {
+    const next = !validated;
+    setValidated(next);
+    await fetch(`/api/study-notes/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ validated: next }),
+    });
+  }
 
   async function handleBookmark(slug: string) {
     const next = bookmarkPosition === slug ? null : slug;
@@ -374,7 +388,15 @@ export default function StudyNotePage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{note.title}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium truncate">{note.title}</p>
+              {validated && (
+                <span className="flex items-center gap-1 shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <BadgeCheck className="h-4 w-4" />
+                  Verified
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 mt-0.5">
               {note.task?.goal && (
                 <p className="text-xs text-muted-foreground truncate">{note.task.goal.title}</p>
@@ -391,6 +413,15 @@ export default function StudyNotePage() {
           <div className="flex items-center gap-2 shrink-0">
             {!editing ? (
               <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`h-8 w-8 ${validated ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={handleToggleValidated}
+                  title={validated ? "Mark as unverified" : "Mark as verified"}
+                >
+                  <BadgeCheck className="h-4 w-4" />
+                </Button>
                 {flashcardsCount !== null ? (
                   <>
                     <Button

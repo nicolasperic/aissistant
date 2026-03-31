@@ -76,6 +76,7 @@ model StudyNote {
   task             Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
   goalId           String?
   bookmarkPosition String?
+  validated        Boolean     @default(false)
   position         Int         @default(0)
   flashcards       Flashcard[]
   createdAt        DateTime    @default(now())

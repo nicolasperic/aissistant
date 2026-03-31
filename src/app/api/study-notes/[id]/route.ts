@@ -37,11 +37,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { bookmarkPosition } = await req.json();
-  const note = await db.studyNote.update({
-    where: { id },
-    data: { bookmarkPosition: bookmarkPosition ?? null },
-  });
+  const body = await req.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: Record<string, any> = {};
+  if ("bookmarkPosition" in body) data.bookmarkPosition = body.bookmarkPosition ?? null;
+  if ("validated" in body) data.validated = body.validated;
+  const note = await db.studyNote.update({ where: { id }, data });
   return NextResponse.json(note);
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
-import { BookOpen, ChevronDown, ChevronRight, Circle, Clock, GripVertical, Layers, Loader2 } from "lucide-react";
+import { BadgeCheck, BookOpen, ChevronDown, ChevronRight, Circle, Clock, GripVertical, Layers, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TourButton } from "@/components/layout/tour-button";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -26,6 +26,7 @@ interface StudyNoteListItem {
   id: string;
   title: string;
   position: number;
+  validated: boolean;
   createdAt: string;
   _count: { flashcards: number };
   task: {
@@ -392,7 +393,12 @@ export default function StudyNotesPage() {
                             }}
                           >
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium">{note.title}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium">{note.title}</p>
+                                {note.validated && (
+                                  <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-500" />
+                                )}
+                              </div>
                               <div className="flex items-center gap-2 mt-1 flex-wrap">
                                 {note.task.scheduledDate && (
                                   <span className="text-xs text-muted-foreground">
