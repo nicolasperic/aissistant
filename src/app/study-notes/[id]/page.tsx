@@ -94,6 +94,7 @@ export default function StudyNotePage() {
   const [saving, setSaving] = useState(false);
   const [bookmarkPosition, setBookmarkPosition] = useState<string | null>(null);
   const [allNotes, setAllNotes] = useState<SiblingNote[]>([]);
+  const [allNotesLoading, setAllNotesLoading] = useState(true);
   const initialScrollDone = useRef(false);
 
   const fetchNote = useCallback(async () => {
@@ -111,7 +112,7 @@ export default function StudyNotePage() {
 
   useEffect(() => {
     fetchNote();
-    fetch("/api/study-notes").then((r) => r.json()).then(setAllNotes);
+    fetch("/api/study-notes").then((r) => r.json()).then((data) => { setAllNotes(data); setAllNotesLoading(false); });
   }, [fetchNote]);
 
   // Auto-scroll to bookmark on initial load
@@ -378,11 +379,13 @@ export default function StudyNotePage() {
               {note.task?.goal && (
                 <p className="text-xs text-muted-foreground truncate">{note.task.goal.title}</p>
               )}
-              {certification?.shortName && (
+              {allNotesLoading ? (
+                <div className="h-4 w-12 rounded bg-muted animate-pulse" />
+              ) : certification?.shortName ? (
                 <Badge variant="secondary" className="text-xs shrink-0 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                   {certification.shortName}
                 </Badge>
-              )}
+              ) : null}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -547,7 +550,12 @@ export default function StudyNotePage() {
             />
           ) : (
             <>
-              {(prevNote || nextNote) && (
+              {allNotesLoading ? (
+                <div className="mb-8 pb-6 border-b flex items-center justify-between gap-4">
+                  <div className="h-9 w-40 rounded-md bg-muted animate-pulse" />
+                  <div className="h-9 w-40 rounded-md bg-muted animate-pulse" />
+                </div>
+              ) : (prevNote || nextNote) ? (
                 <div className="mb-8 pb-6 border-b flex items-center justify-between gap-4">
                   {prevNote ? (
                     <Button
@@ -572,7 +580,7 @@ export default function StudyNotePage() {
                     </Button>
                   ) : <div />}
                 </div>
-              )}
+              ) : null}
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw]}

@@ -10,7 +10,7 @@ import { TaskList } from "@/components/tasks/task-list";
 import { TaskEditForm } from "@/components/tasks/task-edit-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { startOfWeek, endOfWeek, startOfDay, endOfDay, format, isWednesday, isThursday, isFriday } from "date-fns";
+import { startOfWeek, endOfWeek, startOfDay, endOfDay, format, isWednesday, isThursday, isFriday, addMonths, addWeeks } from "date-fns";
 import { AlertCircle, Calendar, Sparkles } from "lucide-react";
 import type { Goal, Event, UserStats } from "@prisma/client";
 import type { TaskWithGoal } from "@/lib/types";
@@ -18,6 +18,7 @@ import { useSettings } from "@/components/layout/settings-context";
 
 export default function Dashboard() {
   const { settings: { weekStartsOn } } = useSettings();
+  const today = new Date();
   const [weeklyStats, setWeeklyStats] = useState({ completedTasks: 0, totalTasks: 0 });
   const [todayTasks, setTodayTasks] = useState<TaskWithGoal[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -43,6 +44,38 @@ export default function Dashboard() {
       we: endOfWeek(now, { weekStartsOn }),
     };
   }, [weekStartsOn]);
+
+  // Chart 1: Yearly/Quarterly whose startDate falls within [today-1mo, today+4mo]
+  const quarterlyChartGoals = useMemo(() => {
+    const windowStart = addMonths(today, -3);
+    const windowEnd = addMonths(today, 4);
+    return goals
+      .filter((g) => ["YEARLY", "QUARTERLY"].includes(g.type))
+      .filter((g) => {
+        const start = new Date(g.startDate);
+        return start >= windowStart && start <= windowEnd;
+      })
+      .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
+      .slice(0, 5);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goals]);
+
+  // Chart 2: last 3 started weekly goals + next 3 upcoming, shown chronologically
+  const weeklyChartGoals = useMemo(() => {
+    const weekly = goals.filter((g) => g.type === "WEEKLY");
+    const past = weekly
+      .filter((g) => new Date(g.startDate) < today)
+      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+      .slice(0, 3);
+    const upcoming = weekly
+      .filter((g) => new Date(g.startDate) >= today)
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+      .slice(0, 3);
+    return [...past, ...upcoming].sort(
+      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goals]);
 
   useEffect(() => {
     async function load() {
@@ -109,7 +142,6 @@ export default function Dashboard() {
     await fetchTodayTasks();
   };
 
-  const today = new Date();
   const showMidWeekCheckin = isWednesday(today) || isThursday(today);
   const showEndOfWeekReview = isFriday(today);
 
@@ -227,8 +259,8 @@ export default function Dashboard() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <GoalProgressChart goals={goals.filter((g: Goal) => ["YEARLY", "QUARTERLY", "MONTHLY"].includes(g.type)).sort((a: Goal, b: Goal) => b.position - a.position)} />
-        <GoalProgressChart goals={goals.filter((g: Goal) => g.type === "WEEKLY").sort((a: Goal, b: Goal) => b.position - a.position)} title="Weekly Goals" />
+        <GoalProgressChart goals={quarterlyChartGoals} title="Quarterly & Yearly Goals" />
+        <GoalProgressChart goals={weeklyChartGoals} title="Weekly Goals" />
       </div>
     </div>
   );

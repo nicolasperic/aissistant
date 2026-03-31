@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { onTaskCompleted, awardPoints, POINTS } from "@/lib/rewards";
+import { recalculateGoalProgress } from "@/lib/goal-progress";
 import { parseDateOnly } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
@@ -102,6 +103,12 @@ export async function PUT(req: NextRequest) {
     data,
     include: { goal: true, studyNote: { select: { id: true } } },
   });
+
+  // Recalculate goal progress up the hierarchy whenever status changes
+  const statusChanged = body.status !== undefined && body.status !== previousTask?.status;
+  if (statusChanged && task.goalId) {
+    await recalculateGoalProgress(task.goalId);
+  }
 
   return NextResponse.json(task);
 }
