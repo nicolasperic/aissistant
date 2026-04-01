@@ -544,8 +544,8 @@ export default function StudyNotePage() {
       <div className="py-8 flex gap-8 pr-8">
         {/* ToC sidebar with bookmark controls */}
         {!editing && headings.length > 0 && (
-          <aside className="hidden lg:block w-48 shrink-0">
-            <div className="sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto space-y-0.5 pr-2">
+          <aside className="hidden lg:block w-48 shrink-0 sticky top-20 self-start">
+            <div className="max-h-[calc(100vh-10rem)] overflow-y-auto space-y-0.5 pr-2">
               <p className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wide">
                 Contents
               </p>
