@@ -1,8 +1,20 @@
 export type WeekStartDay = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-export type Settings = { weekStartsOn: WeekStartDay };
+export type Settings = {
+  weekStartsOn: WeekStartDay;
+  quarterlyMonthsBefore: number;
+  quarterlyMonthsAfter: number;
+  weeklyWeeksBefore: number;
+  weeklyWeeksAfter: number;
+};
 
 const STORAGE_KEY = "aissistant:settings";
-const defaults: Settings = { weekStartsOn: 6 }; // Saturday
+const defaults: Settings = {
+  weekStartsOn: 6, // Saturday
+  quarterlyMonthsBefore: 4,
+  quarterlyMonthsAfter: 4,
+  weeklyWeeksBefore: 3,
+  weeklyWeeksAfter: 3,
+};
 
 export function loadSettings(): Settings {
   if (typeof window === "undefined") return defaults;

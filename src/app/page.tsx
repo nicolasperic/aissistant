@@ -17,7 +17,7 @@ import type { TaskWithGoal } from "@/lib/types";
 import { useSettings } from "@/components/layout/settings-context";
 
 export default function Dashboard() {
-  const { settings: { weekStartsOn } } = useSettings();
+  const { settings: { weekStartsOn, quarterlyMonthsBefore, quarterlyMonthsAfter, weeklyWeeksBefore, weeklyWeeksAfter } } = useSettings();
   const today = new Date();
   const [weeklyStats, setWeeklyStats] = useState({ completedTasks: 0, totalTasks: 0 });
   const [todayTasks, setTodayTasks] = useState<TaskWithGoal[]>([]);
@@ -37,6 +37,12 @@ export default function Dashboard() {
     return data as TaskWithGoal[];
   }, []);
 
+  const fetchGoals = useCallback(async () => {
+    const res = await fetch("/api/goals");
+    const data = await res.json();
+    setGoals(data);
+  }, []);
+
   const { ws, we } = useMemo(() => {
     const now = new Date();
     return {
@@ -45,52 +51,53 @@ export default function Dashboard() {
     };
   }, [weekStartsOn]);
 
-  // Chart 1: Yearly/Quarterly whose startDate falls within [today-1mo, today+4mo]
+  // Chart 1: Yearly/Quarterly whose startDate falls within the configured month window
   const quarterlyChartGoals = useMemo(() => {
-    const windowStart = addMonths(today, -3);
-    const windowEnd = addMonths(today, 4);
+    const windowStart = addMonths(today, -quarterlyMonthsBefore);
+    const windowEnd = addMonths(today, quarterlyMonthsAfter);
+    // Compare as YYYY-MM-DD strings to avoid UTC/local timezone offset issues
+    const wsDate = windowStart.toISOString().substring(0, 10);
+    const weDate = windowEnd.toISOString().substring(0, 10);
     return goals
       .filter((g) => ["YEARLY", "QUARTERLY"].includes(g.type))
       .filter((g) => {
-        const start = new Date(g.startDate);
-        return start >= windowStart && start <= windowEnd;
+        const startDate = new Date(g.startDate).toISOString().substring(0, 10);
+        return startDate >= wsDate && startDate <= weDate;
       })
       .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
       .slice(0, 5);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [goals]);
+  }, [goals, quarterlyMonthsBefore, quarterlyMonthsAfter]);
 
-  // Chart 2: last 3 started weekly goals + next 3 upcoming, shown chronologically
+  // Chart 2: Weekly goals whose startDate falls within the configured week window
   const weeklyChartGoals = useMemo(() => {
-    const weekly = goals.filter((g) => g.type === "WEEKLY");
-    const past = weekly
-      .filter((g) => new Date(g.startDate) < today)
-      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
-      .slice(0, 3);
-    const upcoming = weekly
-      .filter((g) => new Date(g.startDate) >= today)
-      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-      .slice(0, 3);
-    return [...past, ...upcoming].sort(
-      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-    );
+    const windowStart = addWeeks(today, -weeklyWeeksBefore);
+    const windowEnd = addWeeks(today, weeklyWeeksAfter);
+    const wsDate = windowStart.toISOString().substring(0, 10);
+    const weDate = windowEnd.toISOString().substring(0, 10);
+    return goals
+      .filter((g) => g.type === "WEEKLY")
+      .filter((g) => {
+        const startDate = new Date(g.startDate).toISOString().substring(0, 10);
+        return startDate >= wsDate && startDate <= weDate;
+      })
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [goals]);
+  }, [goals, weeklyWeeksBefore, weeklyWeeksAfter]);
 
   useEffect(() => {
     async function load() {
       try {
 
-        const [tasksRes, goalsRes, eventsRes, rewardsRes, todayData] = await Promise.all([
+        const [tasksRes, , eventsRes, rewardsRes] = await Promise.all([
           fetch(`/api/tasks?from=${ws.toISOString()}&to=${we.toISOString()}`),
-          fetch("/api/goals"),
+          fetchGoals(),
           fetch("/api/events"),
           fetch("/api/rewards"),
           fetchTodayTasks(),
         ]);
 
         const tasks = await tasksRes.json();
-        const goalsData = await goalsRes.json();
         const eventsData = await eventsRes.json();
         const rewardsData = await rewardsRes.json();
 
@@ -98,7 +105,7 @@ export default function Dashboard() {
           completedTasks: tasks.filter((t: { status: string }) => t.status === "COMPLETED").length,
           totalTasks: tasks.length,
         });
-        setGoals(goalsData);
+
         setEvents(eventsData);
         setStats(rewardsData.stats);
       } catch (error) {
@@ -108,7 +115,7 @@ export default function Dashboard() {
       }
     }
     load();
-  }, [fetchTodayTasks, ws, we]);
+  }, [fetchTodayTasks, fetchGoals, ws, we]);
 
   const handleStatusChange = async (id: string, status: string) => {
     await fetch("/api/tasks", {
@@ -116,7 +123,7 @@ export default function Dashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
     });
-    await fetchTodayTasks();
+    await Promise.all([fetchTodayTasks(), fetchGoals()]);
   };
 
   const handleDelete = async (id: string) => {
