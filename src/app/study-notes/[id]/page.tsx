@@ -12,6 +12,16 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, BadgeCheck, ChevronLeft, ChevronRight, Layers, Loader2, Play, RefreshCw, Trash2, Pencil, Check, X, Bookmark } from "lucide-react";
 import { StudyModal, type SessionResult } from "@/components/flashcards/study-modal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Flashcard } from "@prisma/client";
 import type { Components } from "react-markdown";
 
@@ -98,6 +108,8 @@ export default function StudyNotePage() {
   const [validated, setValidated] = useState(false);
   const [allNotes, setAllNotes] = useState<SiblingNote[]>([]);
   const [allNotesLoading, setAllNotesLoading] = useState(true);
+  const [confirmFlashcards, setConfirmFlashcards] = useState(false);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const initialScrollDone = useRef(false);
 
   const fetchNote = useCallback(async () => {
@@ -452,7 +464,7 @@ export default function StudyNotePage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleGenerateFlashcards}
+                    onClick={() => setConfirmFlashcards(true)}
                     disabled={generating}
                     className="gap-1.5"
                   >
@@ -468,9 +480,9 @@ export default function StudyNotePage() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={handleRegenerate}
-                  disabled={regenerating}
-                  title="Regenerate"
+                  onClick={() => setConfirmRegenerate(true)}
+                  disabled={regenerating || validated}
+                  title={validated ? "Cannot regenerate a verified note" : "Regenerate"}
                 >
                   {regenerating ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -656,6 +668,40 @@ export default function StudyNotePage() {
         cards={sessionCards}
         onSessionComplete={() => fetchNote()}
       />
+
+      <AlertDialog open={confirmFlashcards} onOpenChange={setConfirmFlashcards}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generate Flashcards?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will generate flashcards from the current study note content. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmFlashcards(false); handleGenerateFlashcards(); }}>
+              Generate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerate Study Note?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the current note and generate a new one from the task using AI. Any manual edits will be lost. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmRegenerate(false); handleRegenerate(); }}>
+              Regenerate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
