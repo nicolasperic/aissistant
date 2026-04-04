@@ -37,7 +37,7 @@ export default function ReviewPage() {
     const [scheduledRes, completedRes, reviewsRes] = await Promise.all([
       fetch(`/api/tasks?from=${weekStart.toISOString()}&to=${weekEnd.toISOString()}`),
       fetch(`/api/tasks?completedFrom=${weekStart.toISOString()}&completedTo=${weekEnd.toISOString()}`),
-      fetch("/api/reviews?limit=5"),
+      fetch("/api/reviews"),
     ]);
 
     const scheduledTasks = await scheduledRes.json();
