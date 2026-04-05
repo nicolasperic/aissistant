@@ -64,9 +64,15 @@ function slugify(children: React.ReactNode): string {
 }
 
 function extractHeadings(content: string): { level: number; text: string; slug: string }[] {
+  let inCodeBlock = false;
   return content
     .split("\n")
     .flatMap((line) => {
+      if (/^```/.test(line.trim())) {
+        inCodeBlock = !inCodeBlock;
+        return [];
+      }
+      if (inCodeBlock) return [];
       const match = /^(#{1,3})\s+(.+)$/.exec(line.trim());
       if (!match) return [];
       const text = match[2].trim();
