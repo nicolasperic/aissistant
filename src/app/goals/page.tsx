@@ -17,11 +17,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { GoalWithRelations } from "@/lib/types";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { TourButton } from "@/components/layout/tour-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function GoalsPage() {
   const [goals, setGoals] = useState<GoalWithRelations[]>([]);
   const [editingGoal, setEditingGoal] = useState<GoalWithRelations | null>(null);
   const [loading, setLoading] = useState(true);
+  const [goalToDelete, setGoalToDelete] = useState<string | null>(null);
   const [filter, setFilter] = useLocalStorage<"all" | "pending">("goals-filter", "all");
   const [goalsTab, setGoalsTab] = useLocalStorage<string>("goals-tab", "cards");
 
@@ -54,6 +65,12 @@ export default function GoalsPage() {
   const handleDelete = async (id: string) => {
     await fetch(`/api/goals?id=${id}`, { method: "DELETE" });
     loadGoals();
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!goalToDelete) return;
+    await handleDelete(goalToDelete);
+    setGoalToDelete(null);
   };
 
   const handleEdit = async (data: Record<string, string>) => {
@@ -184,7 +201,7 @@ export default function GoalsPage() {
                     key={goal.id}
                     goal={goal}
                     onEdit={setEditingGoal}
-                    onDelete={handleDelete}
+                    onDelete={setGoalToDelete}
                   />
                 ))}
               </div>
@@ -213,6 +230,23 @@ export default function GoalsPage() {
           onSubmit={handleEdit}
         />
       )}
+
+      <AlertDialog open={!!goalToDelete} onOpenChange={(open) => { if (!open) setGoalToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Goal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the goal and all its associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirmed} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

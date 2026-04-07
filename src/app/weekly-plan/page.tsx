@@ -16,6 +16,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { TaskList } from "@/components/tasks/task-list";
 import { TaskForm } from "@/components/tasks/task-form";
 import { TaskEditForm } from "@/components/tasks/task-edit-form";
@@ -59,6 +69,7 @@ export default function PlanPage() {
   const [focusAreas, setFocusAreas] = useState<string[]>([]);
   const [editingTask, setEditingTask] = useState<TaskWithGoal | null>(null);
   const [loading, setLoading] = useState(true);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
   // View scope (independent of plan generation) — persisted
   const [viewScope, setViewScope] = useLocalStorage<ViewScope>("plan-view-scope", "week");
@@ -181,6 +192,12 @@ export default function PlanPage() {
   const handleDelete = async (id: string) => {
     await fetch(`/api/tasks?id=${id}`, { method: "DELETE" });
     loadTasks();
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!taskToDelete) return;
+    await handleDelete(taskToDelete);
+    setTaskToDelete(null);
   };
 
   const handleCreateTask = async (data: Record<string, string>) => {
@@ -602,7 +619,7 @@ export default function PlanPage() {
                               tasks={dayTasks}
                               onStatusChange={handleStatusChange}
                               onEdit={setEditingTask}
-                              onDelete={handleDelete}
+                              onDelete={setTaskToDelete}
                             />
                           </CardContent>
                         )}
@@ -661,7 +678,7 @@ export default function PlanPage() {
                       tasks={dayTasks}
                       onStatusChange={handleStatusChange}
                       onEdit={setEditingTask}
-                      onDelete={handleDelete}
+                      onDelete={setTaskToDelete}
                     />
                   )}
                 </CardContent>
@@ -691,6 +708,23 @@ export default function PlanPage() {
           onRefresh={loadTasks}
         />
       )}
+
+      <AlertDialog open={!!taskToDelete} onOpenChange={(open) => { if (!open) setTaskToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the task. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirmed} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

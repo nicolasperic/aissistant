@@ -81,7 +81,7 @@ export function FlashcardForm({
         <DialogHeader>
           <DialogTitle>{initialData ? "Edit Flashcard" : "New Flashcard"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-hidden">
           <div className="space-y-1.5">
             <Label>Question *</Label>
             <Textarea
@@ -136,7 +136,7 @@ export function FlashcardForm({
           <div className="space-y-1.5">
             <Label>Link to goal <span className="text-muted-foreground text-xs">(optional)</span></Label>
             <Select value={goalId || "none"} onValueChange={(v) => setGoalId(v === "none" ? "" : v)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full truncate">
                 <SelectValue placeholder="Select a goal..." />
               </SelectTrigger>
               <SelectContent>

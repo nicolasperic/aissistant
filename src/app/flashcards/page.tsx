@@ -10,6 +10,16 @@ import { FlashcardForm } from "@/components/flashcards/flashcard-form";
 import { Play, Pencil, Trash2, ChevronRight, Layers } from "lucide-react";
 import type { Flashcard, Goal } from "@prisma/client";
 import { TourButton } from "@/components/layout/tour-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Collect a goal's id and all descendant ids from a flat list
 function getDescendantIds(goalId: string, goals: Goal[]): string[] {
@@ -52,6 +62,7 @@ export default function FlashcardsPage() {
   const [studyCards, setStudyCards] = useState<Flashcard[]>([]);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<string | null>(null);
 
   const loadGoals = useCallback(async () => {
     const res = await fetch("/api/goals");
@@ -140,9 +151,10 @@ export default function FlashcardsPage() {
     loadCards();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this flashcard?")) return;
-    await fetch(`/api/flashcards?id=${id}`, { method: "DELETE" });
+  const handleDeleteConfirmed = async () => {
+    if (!cardToDelete) return;
+    await fetch(`/api/flashcards?id=${cardToDelete}`, { method: "DELETE" });
+    setCardToDelete(null);
     loadCards();
   };
 
@@ -334,7 +346,7 @@ export default function FlashcardsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(card.id)}
+                            onClick={() => setCardToDelete(card.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -365,6 +377,23 @@ export default function FlashcardsPage() {
         cards={studyCards}
         onSessionComplete={handleSessionComplete}
       />
+
+      <AlertDialog open={!!cardToDelete} onOpenChange={(open) => { if (!open) setCardToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Flashcard?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the flashcard and its review history. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirmed} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

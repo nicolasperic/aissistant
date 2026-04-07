@@ -116,6 +116,7 @@ export default function StudyNotePage() {
   const [allNotesLoading, setAllNotesLoading] = useState(true);
   const [confirmFlashcards, setConfirmFlashcards] = useState(false);
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const initialScrollDone = useRef(false);
 
   const fetchNote = useCallback(async () => {
@@ -509,7 +510,7 @@ export default function StudyNotePage() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={handleDelete}
+                  onClick={() => setConfirmDelete(true)}
                   title="Delete note"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -674,6 +675,23 @@ export default function StudyNotePage() {
         cards={sessionCards}
         onSessionComplete={() => fetchNote()}
       />
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Study Note?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this study note and all its flashcards. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmDelete(false); handleDelete(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmFlashcards} onOpenChange={setConfirmFlashcards}>
         <AlertDialogContent>
