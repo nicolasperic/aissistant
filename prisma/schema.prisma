@@ -149,6 +149,163 @@ model AiContext {
   createdAt DateTime @default(now())
 }
 
+// ─── Practice Tests ───────────────────────────────────────────────────────────
+
+enum QuestionType {
+  SINGLE
+  MULTIPLE
+}
+
+enum QuestionSource {
+  OFFICIAL
+  AI_GENERATED
+}
+
+enum PracticeTestType {
+  OFFICIAL
+  AI_GENERATED
+  SHUFFLE
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model Certification {
+  id               String         @id @default(cuid())
+  name             String
+  code             String
+  provider         String
+  description      String?
+  totalQuestions   Int
+  passingScore     Int
+  timeLimitMinutes Int
+  sections         CertSection[]
+  questions        Question[]
+  practiceTests    PracticeTest[]
+  createdAt        DateTime       @default(now())
+}
+
+model CertSection {
+  id              String        @id @default(cuid())
+  certificationId String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  name            String
+  percentage      Int
+  questions       Question[]
+}
+
+model Question {
+  id              String               @id @default(cuid())
+  certificationId String
+  certification   Certification        @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  certSectionId   String?
+  certSection     CertSection?         @relation(fields: [certSectionId], references: [id], onDelete: SetNull)
+  text            String
+  type            QuestionType
+  explanation     String?
+  source          QuestionSource
+  options         QuestionOption[]
+  testLinks       PracticeTestQuestion[]
+  attemptQuestions AttemptQuestion[]
+  attemptAnswers  AttemptAnswer[]
+  createdAt       DateTime             @default(now())
+}
+
+model QuestionOption {
+  id                    String                @id @default(cuid())
+  questionId            String
+  question              Question              @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text                  String
+  isCorrect             Boolean
+  attemptQuestionOptions AttemptQuestionOption[]
+  attemptAnswerOptions  AttemptAnswerOption[]
+}
+
+model PracticeTest {
+  id              String                 @id @default(cuid())
+  certificationId String
+  certification   Certification          @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  title           String
+  type            PracticeTestType
+  questionCount   Int
+  questionLinks   PracticeTestQuestion[]
+  attempts        ExamAttempt[]
+  createdAt       DateTime               @default(now())
+}
+
+model PracticeTestQuestion {
+  practiceTestId String
+  practiceTest   PracticeTest @relation(fields: [practiceTestId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  position       Int
+
+  @@id([practiceTestId, questionId])
+}
+
+model ExamAttempt {
+  id              String            @id @default(cuid())
+  practiceTestId  String
+  practiceTest    PracticeTest      @relation(fields: [practiceTestId], references: [id], onDelete: Cascade)
+  startedAt       DateTime          @default(now())
+  completedAt     DateTime?
+  durationSeconds Int?
+  score           Int?
+  totalQuestions  Int
+  passed          Boolean?
+  status          AttemptStatus     @default(IN_PROGRESS)
+  questions       AttemptQuestion[]
+  answers         AttemptAnswer[]
+}
+
+model AttemptQuestion {
+  id         String                  @id @default(cuid())
+  attemptId  String
+  attempt    ExamAttempt             @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question                @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  position   Int
+  options    AttemptQuestionOption[]
+
+  @@unique([attemptId, questionId])
+}
+
+model AttemptQuestionOption {
+  id                String          @id @default(cuid())
+  attemptQuestionId String
+  attemptQuestion   AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+  optionId          String
+  option            QuestionOption  @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  position          Int
+}
+
+model AttemptAnswer {
+  id         String                @id @default(cuid())
+  attemptId  String
+  attempt    ExamAttempt           @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question              @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  flagged    Boolean               @default(false)
+  isCorrect  Boolean?
+  selected   AttemptAnswerOption[]
+
+  @@unique([attemptId, questionId])
+}
+
+model AttemptAnswerOption {
+  answerId String
+  answer   AttemptAnswer  @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  optionId String
+  option   QuestionOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@id([answerId, optionId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 enum CardRating {
   EASY
   MEDIUM

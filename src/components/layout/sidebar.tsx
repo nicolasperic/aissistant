@@ -14,6 +14,7 @@ import {
   Sparkles,
   Layers,
   BookOpen,
+  GraduationCap,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/review", label: "Review", icon: ClipboardCheck },
   { href: "/study-notes", label: "Study Notes", icon: BookOpen },
   { href: "/flashcards", label: "Flashcards", icon: Layers },
+  { href: "/certifications", label: "Certifications", icon: GraduationCap },
   { href: "/rewards", label: "Rewards", icon: Trophy },
 ];
 
