@@ -34,12 +34,12 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved === "true") setCollapsed(true);
+    if (saved !== "true") setCollapsed(false);
     setMounted(true);
   }, []);
 
@@ -53,8 +53,8 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "hidden md:flex md:flex-col md:border-r md:bg-sidebar",
-        mounted && "transition-all duration-200",
+        "hidden md:flex md:flex-col md:border-r md:bg-sidebar transition-all duration-200",
+        !mounted && "invisible",
         collapsed ? "md:w-14" : "md:w-64"
       )}
     >
