@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Flag, AlignJustify, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ExamMarkdown, OptionMarkdown } from "@/components/exam/exam-markdown";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -356,9 +357,10 @@ export function ExamShell({
                 ? "Select all that apply"
                 : "Select one answer"}
             </p>
-            <h2 className="text-lg font-medium leading-relaxed">
-              {currentIdx + 1}. {currentQuestion.question.text}
-            </h2>
+            <div className="text-base font-medium">
+              <span className="text-muted-foreground mr-1.5">{currentIdx + 1}.</span>
+              <ExamMarkdown content={currentQuestion.question.text} />
+            </div>
           </div>
 
           <div className="border-t mb-6" />
@@ -370,8 +372,11 @@ export function ExamShell({
               const isMultiple = currentQuestion.question.type === "MULTIPLE";
 
               return (
-                <button
+                // div instead of button so code blocks (block elements) can live inside
+                <div
                   key={opt.optionId}
+                  role="button"
+                  tabIndex={0}
                   onClick={() =>
                     toggleOption(
                       currentQuestion.questionId,
@@ -379,8 +384,18 @@ export function ExamShell({
                       currentQuestion.question.type
                     )
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleOption(
+                        currentQuestion.questionId,
+                        opt.optionId,
+                        currentQuestion.question.type
+                      );
+                    }
+                  }}
                   className={cn(
-                    "w-full flex items-start gap-3 rounded-xl border px-4 py-3.5 text-left transition-all",
+                    "w-full flex items-start gap-3 rounded-xl border px-4 py-3.5 text-left cursor-pointer transition-all select-none",
                     isSelected
                       ? "border-primary bg-primary/8 text-foreground"
                       : "border-border hover:border-primary/40 hover:bg-muted/40"
@@ -406,8 +421,10 @@ export function ExamShell({
                       )
                     )}
                   </span>
-                  <span className="text-sm leading-relaxed">{opt.option.text}</span>
-                </button>
+                  <div className="text-sm min-w-0 flex-1">
+                    <OptionMarkdown content={opt.option.text} />
+                  </div>
+                </div>
               );
             })}
           </div>

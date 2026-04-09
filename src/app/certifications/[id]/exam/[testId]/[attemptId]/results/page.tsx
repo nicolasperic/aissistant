@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ExamMarkdown, OptionMarkdown } from "@/components/exam/exam-markdown";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -147,9 +148,9 @@ function OptionRow({ opt, isMultiple }: { opt: ResultOption; isMultiple: boolean
         )}
       </span>
 
-      <span className={cn("leading-relaxed", isHighlighted ? "text-foreground" : "text-muted-foreground")}>
-        {opt.text}
-      </span>
+      <div className={cn("text-sm min-w-0 flex-1", isHighlighted ? "text-foreground" : "text-muted-foreground")}>
+        <OptionMarkdown content={opt.text} />
+      </div>
 
       {/* Labels */}
       <div className="ml-auto flex gap-1.5 shrink-0">
@@ -370,9 +371,10 @@ export default function ResultsPage() {
                       <Flag className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                     )}
                   </div>
-                  <p className="text-sm font-medium leading-relaxed">
-                    {idx + 1}. {q.text}
-                  </p>
+                  <div className="text-sm font-medium">
+                    <span className="text-muted-foreground mr-1">{idx + 1}.</span>
+                    <ExamMarkdown content={q.text} />
+                  </div>
                 </div>
 
                 {q.type === "MULTIPLE" && (
