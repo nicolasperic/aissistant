@@ -371,7 +371,7 @@ export default function ResultsPage() {
                       <Flag className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                     )}
                   </div>
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-medium min-w-0 flex-1">
                     <span className="text-muted-foreground mr-1">{idx + 1}.</span>
                     <ExamMarkdown content={q.text} />
                   </div>

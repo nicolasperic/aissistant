@@ -11,6 +11,12 @@ import type { Components } from "react-markdown";
 // Supports fenced code blocks with syntax highlighting, inline code, lists, etc.
 
 const questionComponents: Components = {
+  pre({ children }) {
+    // ReactMarkdown wraps fenced code blocks in <pre> which gets browser's
+    // white-space: pre and no overflow — replace with a scrollable div so
+    // the SyntaxHighlighter inside can contain its own overflow properly.
+    return <div className="overflow-x-auto">{children}</div>;
+  },
   code({ className, children }) {
     const match = /language-(\w+)/.exec(className ?? "");
     const text = String(children).replace(/\n$/, "");

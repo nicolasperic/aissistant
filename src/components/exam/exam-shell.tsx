@@ -104,10 +104,10 @@ function ExamTimer({
     ? "#f59e0b"
     : "hsl(var(--primary))";
 
-  const r = 13;
+  const r = 11;
   const circ = 2 * Math.PI * r;
-  // dashoffset starts at circ (no fill) and moves to 0 (full fill) as time elapses
-  const offset = circ * (timeLeft / totalSeconds);
+  // dashoffset = 0 → full arc (all time remaining); dashoffset = circ → empty (no time left)
+  const offset = circ * (1 - timeLeft / totalSeconds);
 
   const h = Math.floor(timeLeft / 3600);
   const m = Math.floor((timeLeft % 3600) / 60);
@@ -118,43 +118,40 @@ function ExamTimer({
       : `${m}:${s.toString().padStart(2, "0")}`;
 
   return (
-    <div className="flex items-center gap-2 shrink-0">
+    <div className="flex items-center gap-2 shrink-0" style={{ color: strokeColor }}>
+      <span className="text-sm font-mono font-semibold tabular-nums">
+        {label}
+      </span>
       <svg
-        width="34"
-        height="34"
-        viewBox="0 0 34 34"
+        width="30"
+        height="30"
+        viewBox="0 0 30 30"
         className="-rotate-90"
         aria-hidden
       >
         {/* Track */}
         <circle
-          cx="17"
-          cy="17"
+          cx="15"
+          cy="15"
           r={r}
           fill="none"
-          stroke={strokeColor}
-          strokeWidth="2"
-          opacity="0.15"
-        />
-        {/* Progress — fills as time elapses */}
-        <circle
-          cx="17"
-          cy="17"
-          r={r}
-          fill="none"
-          stroke={strokeColor}
+          stroke="currentColor"
           strokeWidth="2.5"
+          opacity="0.2"
+        />
+        {/* Remaining time — starts full, shrinks as time elapses */}
+        <circle
+          cx="15"
+          cy="15"
+          r={r}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
           strokeDasharray={circ}
           strokeDashoffset={offset}
           strokeLinecap="round"
         />
       </svg>
-      <span
-        className="text-sm font-mono font-semibold tabular-nums"
-        style={{ color: strokeColor }}
-      >
-        {label}
-      </span>
     </div>
   );
 }
@@ -349,7 +346,7 @@ export function ExamShell({
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto px-6 py-8">
           {/* Question */}
           <div className="mb-6">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
