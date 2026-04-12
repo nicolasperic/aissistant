@@ -209,12 +209,39 @@ export async function checkAndAwardBadges(): Promise<string[]> {
       }
       case "cert_ready": {
         const certGoals = await db.goal.findMany({
-          where: { type: "QUARTERLY", title: { startsWith: "Pass Adobe Commerce" } },
-          include: { tasks: { select: { status: true } } },
+          where: { type: "QUARTERLY", title: { contains: "Adobe Commerce" } },
+          select: { id: true },
         });
-        earned = certGoals.some(
-          (g) => g.tasks.length > 0 && g.tasks.every((t) => t.status === "COMPLETED" || t.status === "SKIPPED")
-        );
+
+        for (const certGoal of certGoals) {
+          // Recursively collect all descendant goal IDs
+          const allGoalIds: string[] = [certGoal.id];
+          const queue = [certGoal.id];
+          while (queue.length > 0) {
+            const parentId = queue.shift()!;
+            const children = await db.goal.findMany({
+              where: { parentId },
+              select: { id: true },
+            });
+            for (const child of children) {
+              allGoalIds.push(child.id);
+              queue.push(child.id);
+            }
+          }
+
+          const allTasks = await db.task.findMany({
+            where: { goalId: { in: allGoalIds } },
+            select: { status: true },
+          });
+
+          if (
+            allTasks.length > 0 &&
+            allTasks.every((t) => t.status === "COMPLETED" || t.status === "SKIPPED")
+          ) {
+            earned = true;
+            break;
+          }
+        }
         break;
       }
       default:
