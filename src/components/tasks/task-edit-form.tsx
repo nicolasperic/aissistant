@@ -88,7 +88,7 @@ export function TaskEditForm({
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-hidden">
           <div>
             <Label htmlFor="edit-task-title">Title</Label>
             <Input
@@ -98,14 +98,14 @@ export function TaskEditForm({
               required
             />
           </div>
-          <div>
+          <div className="overflow-hidden">
             <Label htmlFor="edit-task-description">Description</Label>
             <Textarea
               id="edit-task-description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Optional description..."
-              className="min-h-[80px] resize-y font-mono text-xs"
+              className="min-h-[80px] max-h-[350px] resize-y font-mono text-xs overflow-auto w-full"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
