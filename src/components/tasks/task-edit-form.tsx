@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -95,6 +96,16 @@ export function TaskEditForm({
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-task-description">Description</Label>
+            <Textarea
+              id="edit-task-description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Optional description..."
+              className="min-h-[80px] resize-y font-mono text-xs"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

@@ -2,6 +2,8 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -186,9 +188,17 @@ export function TaskItem({
         <div className="overflow-hidden">
           <div className="border-t bg-muted/30 px-4 py-3 pl-11 space-y-3">
             {/* Task description */}
-            <p className="text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap">
-              {task.description}
-            </p>
+            <div className="text-xs leading-relaxed text-muted-foreground prose-sm max-w-none
+              [&_ul]:list-disc [&_ul]:ml-4 [&_ul]:space-y-0.5
+              [&_ol]:list-decimal [&_ol]:ml-4 [&_ol]:space-y-0.5
+              [&_li]:leading-relaxed
+              [&_strong]:font-semibold [&_strong]:text-foreground
+              [&_p]:mb-1 [&_p:last-child]:mb-0
+              [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:font-mono">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {task.description ?? ""}
+              </ReactMarkdown>
+            </div>
 
             {/* Planning notes */}
             <div className="space-y-1.5">
