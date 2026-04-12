@@ -25,6 +25,48 @@ import {
 import type { Flashcard } from "@prisma/client";
 import type { Components } from "react-markdown";
 
+const R = 11;
+const CIRC = 2 * Math.PI * R;
+
+function ScrollProgressRing({ scroller }: { scroller: HTMLElement | null }) {
+  const arcRef = useRef<SVGCircleElement>(null);
+  const tooltipRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!scroller) return;
+    function onScroll() {
+      const scrollable = scroller!.scrollHeight - scroller!.clientHeight;
+      const progress = scrollable > 0 ? Math.min(scroller!.scrollTop / scrollable, 1) : 0;
+      if (arcRef.current) {
+        arcRef.current.style.strokeDashoffset = String(CIRC * (1 - progress));
+      }
+      if (tooltipRef.current) {
+        tooltipRef.current.title = `${Math.round(progress * 100)}%`;
+      }
+    }
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", onScroll);
+  }, [scroller]);
+
+  return (
+    <span ref={tooltipRef} title="0%" className="shrink-0 cursor-default">
+      <svg width="26" height="26" viewBox="0 0 30 30" className="-rotate-90" aria-hidden>
+        <circle cx="15" cy="15" r={R} fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted-foreground/20" />
+        <circle
+          ref={arcRef}
+          cx="15" cy="15" r={R} fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeDasharray={CIRC}
+          strokeDashoffset={CIRC}
+          strokeLinecap="round"
+          className="text-primary"
+        />
+      </svg>
+    </span>
+  );
+}
+
 interface GoalNode {
   id: string;
   title: string;
@@ -118,6 +160,7 @@ export default function StudyNotePage() {
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const initialScrollDone = useRef(false);
+  const [scroller, setScroller] = useState<HTMLElement | null>(null);
 
   const fetchNote = useCallback(async () => {
     const res = await fetch(`/api/study-notes/${id}`);
@@ -137,6 +180,11 @@ export default function StudyNotePage() {
     fetchNote();
     fetch("/api/study-notes").then((r) => r.json()).then((data) => { setAllNotes(data); setAllNotesLoading(false); });
   }, [fetchNote]);
+
+  // Resolve the <main> scroll container once on mount
+  useEffect(() => {
+    setScroller(document.querySelector("main"));
+  }, []);
 
   // Auto-scroll to bookmark on initial load
   useEffect(() => {
@@ -415,6 +463,7 @@ export default function StudyNotePage() {
                   Verified
                 </span>
               )}
+              <ScrollProgressRing scroller={scroller} />
             </div>
             <div className="flex items-center gap-2 mt-0.5">
               {note.task?.goal && (
