@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- This file was created with the aha Ansi HTML Adapter. https://github.com/theZiz/aha -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xml+xhtml; charset=UTF-8"/>
+<title>stdin</title>
+</head>
+<body>
+<pre>
+Today I had a nice idea for a new feature on our AIssistant app (is becoming more a study app). I've been preparing my Adobe Certifications with your help, generating content, validating content and also generating practice tests : )
+
+What I thought we could add and integrate in our super study app is the possibility of taking practice tests in the app itself. So wanted to plan this with you first, and then work the plan : p
+----------------------------------
+Context:
+
+We might first need to model a Certification so we can tie practice tests to specific certs. Each test could have a specific passing score 30/50, 33/50, 37/50, also a time limit i.e 1h 40mins. And also the sections they have and which % each
+section covers. I'm thinking and scoping this focused on Adobe Commerce certifications but we can go wider since I'm also planning on preparing Hyva certificates and not all these things might apply (they would probably have passing scores but
+maybe not sections and % of the exam mapped to each section)
+
+Users will have the ability to navigate i.e a Certification Catalog or listing and when they pick a cert they can go to a view page in which they can begin a practice test, maybe displaying in there more than one practice test (official one, I
+could import.. and AI generated ones).
+Then when starting the exam they will have an initial screen with the certificate title, displaying number of questions, time limit and a Begin button.
+
+I'm seeing what Adobe Commerce practice flow does and we could do something similar. There's a top navigation that displays i.e Page: 1/ 50 (it could be Question insatead of page) it also has a button `Flag this page` it could be question.. so
+users can flag the question and review later, if they continued and let it without answering or where in doubts. There's also a button (hamburger button, three horizontal lines icon) that will slide from the right a new section that shows all
+pages with buttons: Page: [1] [2] [3]... [50] so users can pick any page and quickly navigate to it. If it was flagged it will display a flag instead of the number.
+
+There are also some Next, Back arrows to navigate questions.
+
+The main content has a card that will display the question `1. question text` a line dividing the answers that are listed below. Some questions can have one valid answer among distractors so those use a radio button, and there are others that
+ask you to pick 2 valid answers with 2 distractors and this sort of answers uses checkbox instead. This could be modeled on the question itself, type of question single/multiple answer and that could change how we render the answers
+
+There's also a Submit page button below that allows you to continue to the next question.
+
+They are also displaying an Exam Timer on the right, with a down counter 1h 39m 36s and it has a circle graph, like pie. All circle is white and there's a section with a different color that keeps growin as time goes by. Showing a graphic way
+for user to know how much time they have.
+
+If the user goes away from the screen, if it loses focus they will add a layer overlapping everything with a text `Content Hidden` and a subtext `Your exam is still active. Click back into this window and release all keys to continue.. clicking
+ keyboard keys can also trigger this layer, not only losing focus.
+
+This is some context for you to plan things but you can change things a bit and do it more our own, no need to copy word by word what Adobe has.
+
+When the user finishes the exam there's an overall viewq, + per section breakdown and also if you pass or not. Completed: Mar 24, 2026 10:33 AM.. Duration: 0:25:22..
+Breakdown is quite simple, it lists the section and the percentage you got on each section. Score 33 SCALE 0 - 50  (50 will depend on the number of questions, the ones we generate with you usually have 30, some had 20). Magento ones have 50
+
+Magento also keeps track of the practice exams a user takes, how many times you took the exam and if you passed or not + your score. Soy you can review any time previous exam takes.
+
+--------------------------------
+
+What do you say? Sounds like a good addition, right?
+
+⏺ Love it! This is a perfect addition — you're basically building a full learning platform at this point. Let me lay out a solid plan before we touch any code.
+
+  ---
+  Feature Plan: Practice Tests
+
+  Data Model (Prisma)
+
+  Certification
+  - id, name, code (e.g. AD0-E727), provider (Adobe, Hyva…), description
+  - totalQuestions, passingScore, timeLimitMinutes
+
+  CertSection (optional, for certs that have sections)
+  - id, certificationId, name, percentage
+
+  PracticeTest
+  - id, certificationId, title, type (OFFICIAL | AI_GENERATED)
+  - createdAt
+
+  Question
+  - id, practiceTestId, certSectionId (nullable), text, position
+  - type (SINGLE | MULTIPLE), explanation (shown after results)
+
+  QuestionOption
+  - id, questionId, text, isCorrect
+
+  ExamAttempt
+  - id, practiceTestId, startedAt, completedAt, durationSeconds
+  - score, totalQuestions, passed, status (IN_PROGRESS | COMPLETED)
+
+  AttemptAnswer
+  - id, attemptId, questionId, flagged
+  - relation to selected options → AttemptAnswerOption (which options were picked)
+
+  ---
+  Pages &amp; Routes
+
+  /certifications              → Catalog listing
+  /certifications/[id]         → Cert detail + available tests + attempt history
+  /certifications/[id]/exam/[testId]        → Intro screen (# questions, time, Begin)
+  /certifications/[id]/exam/[testId]/[attemptId]   → Active exam
+  /certifications/[id]/exam/[testId]/[attemptId]/results  → Results + breakdown
+
+  ---
+  Exam Screen Components
+
+  - Top bar: Question X / Y · Flag button · Hamburger nav
+  - Slide-out panel (from right): grid of question numbers, flagged ones show a flag icon instead of number
+  - Question card: question text → divider → options (radio for SINGLE, checkbox for MULTIPLE)
+  - Bottom: Back / Next + &quot;Submit Exam&quot; when on last question (or always accessible)
+  - Timer (top-right): countdown 1h 39m 36s + circular SVG ring that fills as time runs out
+  - Focus-lost overlay: full-screen blur with &quot;Content Hidden&quot; — triggers on visibilitychange or blur events
+
+  ---
+  Results Screen
+
+  - Pass / Fail banner
+  - Score: 33 / 50 (or whatever total is)
+  - Completed date + duration
+  - Section breakdown table: section name → % correct
+  - &quot;Retake&quot; button → starts a new attempt
+
+  ---
+  Attempt History (on cert detail page)
+
+  Table: Date · Score · Passed · Duration — one row per attempt
+
+  ---
+  Phased Build
+
+  ┌───────┬───────────────────────────────────────────────────────────────┐
+  │ Phase │                             What                              │
+  ├───────┼───────────────────────────────────────────────────────────────┤
+  │ 1     │ Schema + migrations + seed data (one cert with sections)      │
+  ├───────┼───────────────────────────────────────────────────────────────┤
+  │ 2     │ Certification catalog + detail page                           │
+  ├───────┼───────────────────────────────────────────────────────────────┤
+  │ 3     │ Exam intro + active exam screen (question nav, flag, answers) │
+  ├───────┼───────────────────────────────────────────────────────────────┤
+  │ 4     │ Timer + focus-lost overlay                                    │
+  ├───────┼───────────────────────────────────────────────────────────────┤
+  │ 5     │ Submit + results page                                         │
+  ├───────┼───────────────────────────────────────────────────────────────┤
+  │ 6     │ Attempt history on cert detail                                │
+  └───────┴───────────────────────────────────────────────────────────────┘
+
+  ---
+  A few design decisions to confirm before we start:
+
+  1. Sections are optional — for Hyva or simple certs we just skip CertSection. The results breakdown only shows if sections exist. Sound right?
+  2. Question import — for Phase 1 we'll add questions via seed/SQL. Later we can add an admin UI or JSON import. OK to defer?
+  3. AI generation — defer to a later phase? We already have the AI infrastructure so it'll be easy to wire up once the model exists.
+  4. Focus-lost overlay — do you want it to pause the timer too, or just hide content?
+  5. Retake behavior — does retaking shuffle question order / option order? Or same order every time?
+
+  What do you think of the plan? Any changes before we dive in?</pre>
+</body>
+</html>
