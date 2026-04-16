@@ -12,12 +12,16 @@ interface FlashcardsResponse {
   flashcards: FlashcardPair[];
 }
 
-const SYSTEM_PROMPT = `You are a flashcard creator for technical certification exam preparation. Extract testable Q&A pairs from study content.
+const SYSTEM_PROMPT = `You are a flashcard creator for technical certification exam preparation.
 
-Focus primarily on the "Quick-Reference Checklist" section. Each card should test one specific, concrete fact.
-- Questions should be clear and unambiguous
-- Answers should be concise but complete
-- Hints should give a nudge without giving away the answer
+Rules:
+- Generate EXACTLY 15 flashcards — no more, no less.
+- Each card must test a DISTINCT concept. Never create two cards that test the same fact from different angles.
+- If you find yourself with more than 15 candidates, keep only the highest-value exam traps and discard duplicates or low-priority details.
+- Priority order: (1) Quick-Reference Checklist items, (2) "Tricky Concepts / Exam Traps" callouts, (3) key architectural decisions explained in the body.
+- Questions must be specific and unambiguous — avoid vague questions like "What is X?"
+- Answers must be concise (1–3 sentences max).
+- Hints give a nudge without revealing the answer.
 
 Return valid JSON only.`;
 
@@ -37,7 +41,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Study note not found" }, { status: 404 });
   }
 
-  const userMessage = `From the following study notes, create flashcards. Focus primarily on the Quick-Reference Checklist section but also pick up key exam-focus points throughout the content.
+  const userMessage = `From the following study notes, create exactly 15 flashcards.
+
+Step 1: Identify all candidate facts from the Quick-Reference Checklist and Exam Trap sections.
+Step 2: Deduplicate — if two candidates test the same underlying concept, keep only the more precise one.
+Step 3: If you still have more than 15, drop the least exam-relevant ones until you have exactly 15.
 
 Return JSON: { "flashcards": [{ "question": "...", "answer": "...", "hint": "..." }] }
 
