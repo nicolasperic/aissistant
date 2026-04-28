@@ -207,7 +207,9 @@ export default function StudyNotesPage() {
                   color: !collapsedGroups.has(c.id) ? "var(--ink)" : "var(--ink-2)",
                   fontSize: 12, textAlign: "left", cursor: "default", lineHeight: 1.35,
                   fontFamily: "inherit",
-                }}>
+                }}
+                onMouseEnter={e => { if (collapsedGroups.has(c.id)) e.currentTarget.style.background = "var(--hover)"; }}
+                onMouseLeave={e => { if (collapsedGroups.has(c.id)) e.currentTarget.style.background = "transparent"; }}>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {c.title.length > 30 ? c.title.slice(0, 30) + "…" : c.title}
                   </span>

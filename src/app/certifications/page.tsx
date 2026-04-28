@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { GraduationCap, Clock, Target, BookOpen, ChevronRight, Award } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { GraduationCap, Clock, Target, BookOpen, ChevronRight, Award, Play } from "lucide-react";
 
 type PracticeTest = {
   id: string;
@@ -40,6 +37,14 @@ function formatTime(minutes: number) {
   return h > 0 ? `${h}h ${m > 0 ? `${m}m` : ""}`.trim() : `${m}m`;
 }
 
+function Stat({ icon: Icon, children }: { icon: React.ComponentType<React.SVGProps<SVGSVGElement> & { size?: number; strokeWidth?: number }>; children: React.ReactNode }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 12 }}>
+      <Icon size={12} strokeWidth={1.5} /> <span>{children}</span>
+    </span>
+  );
+}
+
 export default function CertificationsPage() {
   const [certs, setCerts] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,105 +60,99 @@ export default function CertificationsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48 text-muted-foreground">
+      <div className="page-v2 fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 200, color: "var(--ink-3)" }}>
         Loading certifications…
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <GraduationCap className="h-7 w-7 text-primary" />
+    <div className="page-v2 fade-up" style={{ maxWidth: 920 }}>
+      <div className="page-hd-v2">
         <div>
-          <h1 className="text-2xl font-bold">Certification Catalog</h1>
-          <p className="text-sm text-muted-foreground">Pick a certification and start practicing</p>
+          <h1 className="page-title-v2" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <GraduationCap size={20} strokeWidth={1.6} style={{ color: "var(--ink-2)" }} />
+            Certification Catalog
+          </h1>
+          <p className="page-sub-v2">Pick a certification and start practicing.</p>
         </div>
       </div>
 
-      {certs.length === 0 && (
-        <div className="text-center py-16 text-muted-foreground">
+      {certs.length === 0 ? (
+        <div style={{ padding: "64px 0", textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>
           No certifications found.
         </div>
-      )}
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {certs.map((cert) => {
+            const totalAttempts = cert.practiceTests.reduce(
+              (sum, t) => sum + t._count.attempts,
+              0
+            );
+            const passPercent = Math.round((cert.passingScore / cert.totalQuestions) * 100);
 
-      <div className="grid gap-4">
-        {certs.map((cert) => {
-          const totalAttempts = cert.practiceTests.reduce(
-            (sum, t) => sum + t._count.attempts,
-            0
-          );
-          const passPercent = Math.round((cert.passingScore / cert.totalQuestions) * 100);
-
-          return (
-            <Card key={cert.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline" className="text-xs font-mono">
-                        {cert.code}
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        {cert.provider}
-                      </Badge>
+            return (
+              <div key={cert.id} className="card-v2" style={{ padding: "20px 22px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+                      <span className="pill-v2 mono" style={{ whiteSpace: "nowrap" }}>{cert.code}</span>
+                      <span className="pill-v2" style={{ whiteSpace: "nowrap" }}>{cert.provider}</span>
                     </div>
-                    <h2 className="text-lg font-semibold leading-snug">{cert.name}</h2>
+                    <h2 style={{ margin: 0, fontSize: 18, fontWeight: 500, letterSpacing: "-0.01em", color: "var(--ink)" }}>
+                      {cert.name}
+                    </h2>
                     {cert.description && (
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                      <p style={{ margin: "6px 0 14px", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.55, maxWidth: 700 }}>
                         {cert.description}
                       </p>
                     )}
+                    <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap", marginTop: cert.description ? 0 : 14 }}>
+                      <Stat icon={BookOpen}>
+                        <span className="mono" style={{ color: "var(--ink)" }}>{cert._count.questions}</span> questions in pool
+                      </Stat>
+                      <Stat icon={Target}>
+                        Pass: <span className="mono" style={{ color: "var(--ink)" }}>{cert.passingScore}/{cert.totalQuestions}</span> ({passPercent}%)
+                      </Stat>
+                      <Stat icon={Clock}>
+                        <span className="mono">{formatTime(cert.timeLimitMinutes)}</span>
+                      </Stat>
+                      {totalAttempts > 0 && (
+                        <Stat icon={Play}>
+                          <span className="mono" style={{ color: "var(--ink)" }}>{totalAttempts}</span> attempts
+                        </Stat>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 14 }}>
+                      {cert.practiceTests.map((test) => (
+                        <span key={test.id} style={{
+                          display: "inline-flex", alignItems: "center", gap: 4,
+                          padding: "4px 9px",
+                          fontSize: 11, fontWeight: 500,
+                          fontFamily: "var(--font-mono)",
+                          borderRadius: 5,
+                          whiteSpace: "nowrap",
+                          color: test.type === "OFFICIAL" ? "var(--v2-accent)" : "var(--ink-2)",
+                          background: test.type === "OFFICIAL" ? "var(--accent-soft)" : "var(--bg-elev-2)",
+                          border: `0.5px solid ${test.type === "OFFICIAL" ? "var(--accent-dim)" : "var(--line)"}`,
+                          letterSpacing: 0,
+                        }}>
+                          {TEST_TYPE_LABEL[test.type]} · {test.questionCount}q{test._count.attempts > 0 ? ` · ${test._count.attempts} taken` : ""}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                   <Link href={`/certifications/${cert.id}`}>
-                    <Button className="shrink-0 gap-1">
-                      View <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    <button className="btn-v2-primary">
+                      View <ChevronRight size={11} strokeWidth={2} />
+                    </button>
                   </Link>
                 </div>
-              </CardHeader>
-
-              <CardContent className="pt-0">
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
-                  <span className="flex items-center gap-1.5">
-                    <BookOpen className="h-4 w-4" />
-                    {cert._count.questions} questions in pool
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Target className="h-4 w-4" />
-                    Pass: {cert.passingScore}/{cert.totalQuestions} ({passPercent}%)
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4" />
-                    {formatTime(cert.timeLimitMinutes)}
-                  </span>
-                  {totalAttempts > 0 && (
-                    <span className="flex items-center gap-1.5">
-                      <Award className="h-4 w-4" />
-                      {totalAttempts} attempt{totalAttempts !== 1 ? "s" : ""}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {cert.practiceTests.map((test) => (
-                    <div
-                      key={test.id}
-                      className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs"
-                    >
-                      <span className="font-medium">{TEST_TYPE_LABEL[test.type]}</span>
-                      <span className="text-muted-foreground">
-                        · {test.questionCount}q
-                        {test._count.attempts > 0 && ` · ${test._count.attempts} taken`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
