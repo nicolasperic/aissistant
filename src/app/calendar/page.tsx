@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { TourButton } from "@/components/layout/tour-button";
 import {
   startOfMonth,
   endOfMonth,
@@ -14,15 +13,16 @@ import {
   format,
   addMonths,
   subMonths,
+  differenceInCalendarDays,
 } from "date-fns";
 import {
   ChevronLeft,
   ChevronRight,
-  CalendarDays,
+  Plus,
+  Calendar,
   Clock,
-  CheckCircle2,
-  Circle,
-  ExternalLink,
+  Check,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   DndContext,
@@ -35,72 +35,54 @@ import {
   useSensors,
   useSensor,
 } from "@dnd-kit/core";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Tickbox } from "@/components/v2/primitives";
 import type { TaskWithGoal, Event } from "@/lib/types";
 
-const PRIORITY_DOT: Record<string, string> = {
-  LOW: "bg-gray-400",
-  MEDIUM: "bg-blue-500",
-  HIGH: "bg-orange-500",
-  CRITICAL: "bg-red-500",
+/* ── Kind tokens for event chips ─────────────────────────── */
+const KIND_TOKENS: Record<string, { color: string; label: string }> = {
+  task:          { color: "var(--v2-accent)", label: "task" },
+  milestone:     { color: "var(--v2-warn)",   label: "milestone" },
+  checkpoint:    { color: "var(--v2-info)",   label: "checkpoint" },
+  certification: { color: "var(--v2-danger)", label: "certification" },
+  review:        { color: "var(--ink-3)",     label: "review" },
 };
 
-const PRIORITY_TEXT: Record<string, string> = {
-  LOW: "text-gray-500",
-  MEDIUM: "text-blue-600",
-  HIGH: "text-orange-500",
-  CRITICAL: "text-red-500",
-};
+const DOW_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-const DAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MAX_VISIBLE_PER_DAY = 3;
+function getEventKind(event: Event): string {
+  return event.category?.toLowerCase() || "task";
+}
 
-function DraggableChip({
-  id,
-  children,
-}: {
-  id: string;
-  children: React.ReactNode;
-}) {
+/* ── Draggable/Droppable wrappers ────────────────────────── */
+function DraggableChip({ id, children }: { id: string; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id });
   return (
-    <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className="touch-none"
-      style={{ opacity: isDragging ? 0 : 1 }}
-    >
+    <div ref={setNodeRef} {...attributes} {...listeners} className="touch-none" style={{ opacity: isDragging ? 0 : 1 }}>
       {children}
     </div>
   );
 }
 
-function DroppableDay({
-  dayId,
-  className,
-  onClick,
-  children,
-}: {
+function DroppableDay({ dayId, style, onClick, children }: {
   dayId: string;
-  className?: string;
+  style?: React.CSSProperties;
   onClick: () => void;
   children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: dayId });
   return (
-    <div
+    <button
       ref={setNodeRef}
       onClick={onClick}
-      className={cn(
-        className,
-        isOver && "ring-2 ring-inset ring-primary bg-primary/10"
-      )}
+      style={{
+        ...style,
+        outline: isOver ? "2px solid var(--v2-accent)" : undefined,
+        outlineOffset: isOver ? -2 : undefined,
+      }}
     >
       {children}
-    </div>
+    </button>
   );
 }
 
@@ -116,55 +98,47 @@ export default function CalendarPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  // Full grid range: Sunday before month start → Saturday after month end
+  // Monday-start calendar grid
   const calendarDays = useMemo(() => {
-    const start = startOfWeek(startOfMonth(currentMonth));
-    const end = endOfWeek(endOfMonth(currentMonth));
+    const start = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
+    const end = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
     return eachDayOfInterval({ start, end });
   }, [currentMonth]);
 
   useEffect(() => {
-    const from = startOfWeek(startOfMonth(currentMonth)).toISOString();
-    const to = endOfWeek(endOfMonth(currentMonth)).toISOString();
+    const from = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 }).toISOString();
+    const to = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 }).toISOString();
 
     setLoading(true);
     Promise.all([
       fetch(`/api/tasks?from=${from}&to=${to}`).then((r) => r.json()),
       fetch(`/api/events?from=${from}&to=${to}`).then((r) => r.json()),
     ]).then(([tasksData, eventsData]) => {
-      setTasks(
-        (tasksData as TaskWithGoal[]).filter((t) => t.status !== "DRAFT")
-      );
+      setTasks((tasksData as TaskWithGoal[]).filter((t) => t.status !== "DRAFT"));
       setEvents(eventsData as Event[]);
       setLoading(false);
     });
   }, [currentMonth]);
 
   const getTasksForDay = (day: Date) =>
-    tasks.filter(
-      (t) => t.scheduledDate && isSameDay(new Date(t.scheduledDate), day)
-    );
+    tasks.filter((t) => t.scheduledDate && isSameDay(new Date(t.scheduledDate), day));
 
   const getEventsForDay = (day: Date) =>
     events.filter((e) => isSameDay(new Date(e.eventDate), day));
 
   const selectedTasks = getTasksForDay(selectedDay);
   const selectedEvents = getEventsForDay(selectedDay);
+  const selectedItems = [...selectedEvents.map(e => ({ type: "event" as const, ...e })), ...selectedTasks.map(t => ({ type: "task" as const, ...t }))];
 
   const toggleTaskStatus = async (task: TaskWithGoal) => {
-    const newStatus =
-      task.status === "COMPLETED" ? "PENDING" : "COMPLETED";
+    const newStatus = task.status === "COMPLETED" ? "PENDING" : "COMPLETED";
     await fetch("/api/tasks", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: task.id, status: newStatus }),
     });
     setTasks((prev) =>
-      prev.map((t) =>
-        t.id === task.id
-          ? { ...t, status: newStatus as typeof task.status }
-          : t
-      )
+      prev.map((t) => t.id === task.id ? { ...t, status: newStatus as typeof task.status } : t)
     );
   };
 
@@ -173,403 +147,352 @@ export default function CalendarPage() {
     setSelectedDay(new Date());
   };
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
+  const handleDragStart = (event: DragStartEvent) => setActiveId(event.active.id as string);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveId(null);
     const { active, over } = event;
     if (!over) return;
-
     const activeStr = active.id as string;
     const overStr = over.id as string;
     if (!overStr.startsWith("day:")) return;
-
     const [type, itemId] = activeStr.split(":");
     const targetDate = new Date(overStr.replace("day:", ""));
 
     if (type === "task") {
       const task = tasks.find((t) => t.id === itemId);
-      if (!task) return;
-      if (task.scheduledDate && isSameDay(new Date(task.scheduledDate), targetDate)) return;
-
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === itemId
-            ? { ...t, scheduledDate: targetDate }
-            : t
-        )
-      );
-      await fetch("/api/tasks", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: itemId, scheduledDate: targetDate.toISOString() }),
-      });
+      if (!task || (task.scheduledDate && isSameDay(new Date(task.scheduledDate), targetDate))) return;
+      setTasks((prev) => prev.map((t) => t.id === itemId ? { ...t, scheduledDate: targetDate } : t));
+      await fetch("/api/tasks", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: itemId, scheduledDate: targetDate.toISOString() }) });
     } else if (type === "event") {
       const ev = events.find((e) => e.id === itemId);
-      if (!ev) return;
-      if (isSameDay(new Date(ev.eventDate), targetDate)) return;
-
-      setEvents((prev) =>
-        prev.map((e) =>
-          e.id === itemId
-            ? { ...e, eventDate: targetDate }
-            : e
-        )
-      );
-      await fetch("/api/events", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: itemId, eventDate: targetDate.toISOString() }),
-      });
+      if (!ev || isSameDay(new Date(ev.eventDate), targetDate)) return;
+      setEvents((prev) => prev.map((e) => e.id === itemId ? { ...e, eventDate: targetDate } : e));
+      await fetch("/api/events", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: itemId, eventDate: targetDate.toISOString() }) });
     }
   };
 
-  const activeTask = activeId?.startsWith("task:")
-    ? tasks.find((t) => t.id === activeId.replace("task:", ""))
-    : null;
-  const activeEvent = activeId?.startsWith("event:")
-    ? events.find((e) => e.id === activeId.replace("event:", ""))
-    : null;
+  const activeTask = activeId?.startsWith("task:") ? tasks.find((t) => t.id === activeId.replace("task:", "")) : null;
+  const activeEvent = activeId?.startsWith("event:") ? events.find((e) => e.id === activeId.replace("event:", "")) : null;
+
+  // Month stats
+  const monthLabel = `${MONTHS[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+  const monthTaskCount = tasks.length;
+  const monthEventCount = events.length;
+  const totalThisMonth = monthTaskCount + monthEventCount;
+
+  // Selected day info
+  const selIsToday = isToday(selectedDay);
+  const diffDays = differenceInCalendarDays(selectedDay, new Date());
+
+  // Kind breakdown for mini summary
+  const kindCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    events.forEach(e => {
+      const kind = getEventKind(e);
+      counts[kind] = (counts[kind] || 0) + 1;
+    });
+    if (tasks.length > 0) counts.task = tasks.length;
+    return counts;
+  }, [events, tasks]);
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {format(currentMonth, "MMMM yyyy")}
+    <div className="page-v2 fade-up" style={{ opacity: loading ? 0.5 : 1, transition: "opacity 200ms" }}>
+      {/* Page header */}
+      <div className="page-hd-v2">
+        <div>
+          <h1 className="page-title-v2">
+            Calendar
+            <span className="num">{totalThisMonth} items this month</span>
           </h1>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setCurrentMonth((m) => subMonths(m, 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <p className="page-sub-v2">
+            <span className="mono" style={{ color: "var(--ink-2)" }}>{monthLabel}</span>
+            {" · "}
+            <span className="mono">tasks, milestones &amp; exams in one view</span>
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <TourButton tourId="calendar" autoStart={false} />
-          <Button variant="outline" size="sm" onClick={goToToday}>
-            Today
-          </Button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "inline-flex", gap: 2, alignItems: "center" }}>
+            <button className="btn-v2-icon" onClick={() => setCurrentMonth(m => subMonths(m, 1))} title="Previous month">
+              <ChevronLeft size={14} strokeWidth={1.5} />
+            </button>
+            <button className="btn-v2 btn-v2-sm" onClick={goToToday}>Today</button>
+            <button className="btn-v2-icon" onClick={() => setCurrentMonth(m => addMonths(m, 1))} title="Next month">
+              <ChevronRight size={14} strokeWidth={1.5} />
+            </button>
+          </div>
+          <button className="btn-v2 btn-v2-sm btn-v2-accent"><Plus size={13} strokeWidth={1.5} /> Event</button>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex flex-1 min-h-0 flex-col lg:flex-row gap-4">
-        {/* Calendar grid */}
-        <DndContext
-          sensors={sensors}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div
-            id="tour-calendar-grid"
-            className={cn(
-              "flex flex-1 min-w-0 flex-col transition-opacity",
-              loading && "opacity-50 pointer-events-none"
-            )}
-          >
-            {/* Day-of-week headers */}
-            <div className="grid grid-cols-7 border-b border-border">
-              {DAY_HEADERS.map((d) => (
-                <div
-                  key={d}
-                  className="py-2 text-center text-xs font-medium text-muted-foreground"
-                >
-                  {d}
-                </div>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 20 }}>
+          {/* MONTH GRID */}
+          <div className="card-v2" style={{ padding: 0, overflow: "hidden" }}>
+            {/* DOW header */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--line)" }}>
+              {DOW_SHORT.map(d => (
+                <div key={d} className="mono" style={{
+                  padding: "10px 12px", fontSize: 10, letterSpacing: ".08em",
+                  textTransform: "uppercase", color: "var(--ink-3)", textAlign: "left",
+                }}>{d}</div>
               ))}
             </div>
 
-            {/* Grid cells */}
-            <div className="grid grid-cols-7 border-l border-t border-border flex-1">
-              {calendarDays.map((day) => {
+            {/* Cells */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gridAutoRows: "minmax(98px, 1fr)" }}>
+              {calendarDays.map((day, i) => {
                 const dayTasks = getTasksForDay(day);
                 const dayEvents = getEventsForDay(day);
-                const isCurrentMonth = isSameMonth(day, currentMonth);
-                const isSelected = isSameDay(day, selectedDay);
+                const allItems = [...dayEvents, ...dayTasks];
+                const inMonth = isSameMonth(day, currentMonth);
+                const isSel = isSameDay(day, selectedDay);
                 const isTodayDay = isToday(day);
-
+                const colIdx = i % 7;
+                const rowIdx = Math.floor(i / 7);
                 const dayId = `day:${day.toISOString()}`;
-
-                const eventsSlice = dayEvents.slice(0, MAX_VISIBLE_PER_DAY);
-                const tasksSlice = dayTasks.slice(
-                  0,
-                  MAX_VISIBLE_PER_DAY - eventsSlice.length
-                );
-                const overflow =
-                  dayTasks.length +
-                  dayEvents.length -
-                  eventsSlice.length -
-                  tasksSlice.length;
-                const completedCount = dayTasks.filter(
-                  (t) => t.status === "COMPLETED"
-                ).length;
 
                 return (
                   <DroppableDay
                     key={day.toISOString()}
                     dayId={dayId}
                     onClick={() => setSelectedDay(day)}
-                    className={cn(
-                      "min-h-[110px] border-b border-r border-border p-1.5 text-left",
-                      "flex flex-col gap-0.5 transition-colors hover:bg-muted/30 cursor-pointer",
-                      !isCurrentMonth && "bg-muted/10",
-                      isSelected && "bg-primary/5 ring-1 ring-inset ring-primary/30"
-                    )}
+                    style={{
+                      position: "relative",
+                      background: isSel ? "var(--accent-soft)" : isTodayDay ? "var(--bg-elev-2)" : "transparent",
+                      border: 0,
+                      borderRight: colIdx < 6 ? "1px solid var(--line-soft)" : "none",
+                      borderTop: rowIdx > 0 ? "1px solid var(--line-soft)" : "none",
+                      padding: "8px 10px 6px",
+                      textAlign: "left",
+                      cursor: "default",
+                      color: inMonth ? "var(--ink)" : "var(--ink-4)",
+                      display: "flex", flexDirection: "column", gap: 4,
+                      minHeight: 98,
+                      transition: "background 120ms",
+                    }}
                   >
-                    {/* Date number */}
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span
-                        className={cn(
-                          "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
-                          isTodayDay
-                            ? "bg-primary text-primary-foreground"
-                            : !isCurrentMonth
-                            ? "text-muted-foreground"
-                            : "text-foreground"
-                        )}
-                      >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+                      <span className="mono" style={{
+                        fontSize: 12, fontWeight: isTodayDay ? 600 : 500,
+                        color: isTodayDay ? "var(--accent-ink)" : isSel ? "var(--accent-ink)" : inMonth ? "var(--ink)" : "var(--ink-4)",
+                        background: isTodayDay ? "var(--v2-accent)" : "transparent",
+                        width: isTodayDay ? 22 : "auto",
+                        height: isTodayDay ? 22 : "auto",
+                        borderRadius: isTodayDay ? "50%" : 0,
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        padding: isTodayDay ? 0 : "0 2px",
+                      }}>
                         {format(day, "d")}
                       </span>
-                      {dayTasks.length > 0 && (
-                        <span className="text-[10px] text-muted-foreground pr-0.5">
-                          {completedCount}/{dayTasks.length}
-                        </span>
+                      {allItems.length > 0 && (
+                        <span className="mono" style={{ fontSize: 9.5, color: "var(--ink-3)" }}>{allItems.length}</span>
                       )}
                     </div>
-
-                    {/* Events */}
-                    {eventsSlice.map((event) => (
-                      <DraggableChip key={event.id} id={`event:${event.id}`}>
-                        <div className="flex items-center gap-1 rounded px-1 py-0.5 bg-violet-100 dark:bg-violet-900/30 truncate">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
-                          <span className="truncate text-[11px] text-violet-800 dark:text-violet-300">
-                            {event.title}
-                          </span>
-                        </div>
-                      </DraggableChip>
-                    ))}
-
-                    {/* Tasks */}
-                    {tasksSlice.map((task) => (
-                      <DraggableChip key={task.id} id={`task:${task.id}`}>
-                        <div
-                          className={cn(
-                            "flex items-center gap-1 rounded px-1 py-0.5 truncate",
-                            task.status === "COMPLETED"
-                              ? "bg-muted/40"
-                              : "bg-muted/60"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "h-1.5 w-1.5 shrink-0 rounded-full",
-                              PRIORITY_DOT[task.priority]
-                            )}
-                          />
-                          <span
-                            className={cn(
-                              "truncate text-[11px]",
-                              task.status === "COMPLETED"
-                                ? "line-through text-muted-foreground"
-                                : "text-foreground"
-                            )}
-                          >
+                    {/* Event/task chips */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                      {dayEvents.slice(0, 2).map(ev => {
+                        const tk = KIND_TOKENS[getEventKind(ev)] || KIND_TOKENS.task;
+                        return (
+                          <DraggableChip key={ev.id} id={`event:${ev.id}`}>
+                            <div style={{
+                              fontSize: 10.5, lineHeight: 1.25, padding: "2px 5px 2px 7px",
+                              borderRadius: 4, borderLeft: `2px solid ${tk.color}`,
+                              background: "var(--bg-elev-2)", color: tk.color,
+                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                              fontWeight: 500,
+                            }}>
+                              {ev.title}
+                            </div>
+                          </DraggableChip>
+                        );
+                      })}
+                      {dayTasks.slice(0, 3 - Math.min(dayEvents.length, 2)).map(task => (
+                        <DraggableChip key={task.id} id={`task:${task.id}`}>
+                          <div style={{
+                            fontSize: 10.5, lineHeight: 1.25, padding: "2px 5px 2px 7px",
+                            borderRadius: 4, borderLeft: "2px solid var(--v2-accent)",
+                            background: "var(--bg-elev-2)", color: "var(--v2-accent)",
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            fontWeight: 500,
+                            textDecoration: task.status === "COMPLETED" ? "line-through" : "none",
+                            opacity: task.status === "COMPLETED" ? 0.6 : 1,
+                          }}>
                             {task.title}
-                          </span>
+                          </div>
+                        </DraggableChip>
+                      ))}
+                      {allItems.length > 3 && (
+                        <div className="mono" style={{ fontSize: 9.5, color: "var(--ink-3)", paddingLeft: 7 }}>
+                          +{allItems.length - 3} more
                         </div>
-                      </DraggableChip>
-                    ))}
-
-                    {overflow > 0 && (
-                      <span className="px-1 text-[10px] text-muted-foreground">
-                        +{overflow} more
-                      </span>
-                    )}
+                      )}
+                    </div>
                   </DroppableDay>
                 );
               })}
             </div>
-          </div>
 
-          {/* Floating preview while dragging */}
-          <DragOverlay>
-            {activeTask && (
-              <div
-                className={cn(
-                  "flex items-center gap-1 rounded px-1 py-0.5 shadow-lg cursor-grabbing",
-                  activeTask.status === "COMPLETED" ? "bg-muted/40" : "bg-muted/60"
-                )}
-              >
-                <span
-                  className={cn(
-                    "h-1.5 w-1.5 shrink-0 rounded-full",
-                    PRIORITY_DOT[activeTask.priority]
-                  )}
-                />
-                <span
-                  className={cn(
-                    "text-[11px] max-w-[120px] truncate",
-                    activeTask.status === "COMPLETED" && "line-through text-muted-foreground"
-                  )}
-                >
-                  {activeTask.title}
+            {/* Legend footer */}
+            <div style={{
+              borderTop: "1px solid var(--line)", padding: "10px 14px",
+              display: "flex", gap: 16, alignItems: "center", fontSize: 11,
+            }}>
+              <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em" }}>Legend</span>
+              {Object.entries(KIND_TOKENS).map(([k, tk]) => (
+                <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--ink-2)" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: tk.color }} />
+                  <span className="mono" style={{ fontSize: 10.5 }}>{tk.label}</span>
                 </span>
-              </div>
-            )}
-            {activeEvent && (
-              <div className="flex items-center gap-1 rounded px-1 py-0.5 bg-violet-100 dark:bg-violet-900/30 shadow-lg cursor-grabbing">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
-                <span className="text-[11px] text-violet-800 dark:text-violet-300 max-w-[120px] truncate">
-                  {activeEvent.title}
-                </span>
-              </div>
-            )}
-          </DragOverlay>
-        </DndContext>
-
-        {/* Selected day panel */}
-        <div className="lg:w-72 shrink-0 flex flex-col gap-4 lg:overflow-y-auto">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">
-              {format(selectedDay, "EEEE, MMMM d")}
-            </h2>
-          </div>
-
-          {selectedEvents.length === 0 && selectedTasks.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Nothing scheduled for this day.
-            </p>
-          )}
-
-          {/* Events */}
-          {selectedEvents.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Events
-              </p>
-              {selectedEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="rounded-lg border border-violet-200 dark:border-violet-800/40 bg-violet-50 dark:bg-violet-950/20 p-3 flex flex-col gap-1.5"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-medium text-violet-900 dark:text-violet-100 leading-snug">
-                      {event.title}
-                    </span>
-                    {event.url && (
-                      <a
-                        href={event.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0 mt-0.5 text-violet-500 hover:text-violet-700"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    )}
-                  </div>
-                  {event.description && (
-                    <p className="text-xs text-violet-700 dark:text-violet-300 leading-snug">
-                      {event.description}
-                    </p>
-                  )}
-                  {event.category && (
-                    <Badge
-                      variant="outline"
-                      className="w-fit text-[10px] h-4 px-1.5 border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400"
-                    >
-                      {event.category}
-                    </Badge>
-                  )}
-                </div>
               ))}
             </div>
-          )}
+          </div>
 
-          {/* Tasks */}
-          {selectedTasks.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Tasks
-              </p>
-              {selectedTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={cn(
-                    "rounded-lg border p-3 flex flex-col gap-2 transition-colors",
-                    task.status === "COMPLETED"
-                      ? "bg-muted/30 border-border/50"
-                      : "bg-background border-border"
-                  )}
-                >
-                  <div className="flex items-start gap-2">
-                    <button
-                      onClick={() => toggleTaskStatus(task)}
-                      className="mt-0.5 shrink-0 text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {task.status === "COMPLETED" ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <Circle className="h-4 w-4" />
-                      )}
-                    </button>
-                    <span
-                      className={cn(
-                        "text-sm leading-snug",
-                        task.status === "COMPLETED" &&
-                          "line-through text-muted-foreground"
-                      )}
-                    >
-                      {task.title}
-                    </span>
+          {/* DAY DETAIL PANEL */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="card-v2" style={{ padding: 20 }}>
+              <div className="eyebrow" style={{ marginBottom: 6 }}>
+                {selIsToday ? "Today" : diffDays > 0 ? `In ${diffDays} day${diffDays === 1 ? "" : "s"}` : diffDays < 0 ? `${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? "" : "s"} ago` : "Today"}
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em" }}>
+                    {format(selectedDay, "EEE, MMMM d")}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 pl-6">
-                    <span
-                      className={cn(
-                        "text-xs font-medium",
-                        PRIORITY_TEXT[task.priority]
-                      )}
-                    >
-                      {task.priority.charAt(0) +
-                        task.priority.slice(1).toLowerCase()}
-                    </span>
-                    {task.estimatedMinutes && (
-                      <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {task.estimatedMinutes}m
-                      </span>
-                    )}
-                    {task.goal && (
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] h-4 px-1.5"
-                      >
-                        {task.goal.title}
-                      </Badge>
-                    )}
+                  <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>
+                    {format(selectedDay, "yyyy-MM-dd")}
                   </div>
                 </div>
-              ))}
+                <div className="mono" style={{
+                  fontSize: 32, fontWeight: 500, lineHeight: 1, letterSpacing: "-0.02em",
+                  color: selIsToday ? "var(--v2-accent)" : "var(--ink-2)",
+                }}>
+                  {format(selectedDay, "d")}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 18, marginBottom: 10 }}>
+                <span className="eyebrow">{selectedItems.length} item{selectedItems.length === 1 ? "" : "s"}</span>
+                <button className="btn-v2 btn-v2-sm btn-v2-ghost"><Plus size={11} strokeWidth={1.5} /> Add</button>
+              </div>
+
+              {selectedItems.length === 0 ? (
+                <div style={{
+                  padding: "24px 14px", textAlign: "center",
+                  border: "1px dashed var(--line)", borderRadius: 10,
+                  color: "var(--ink-3)", fontSize: 12.5,
+                }}>
+                  <Calendar size={18} strokeWidth={1.5} style={{ color: "var(--ink-4)", marginBottom: 6 }} />
+                  <div>Nothing scheduled.</div>
+                  <div className="mono" style={{ fontSize: 10.5, color: "var(--ink-4)", marginTop: 4 }}>
+                    A free day to rest or get ahead.
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {selectedEvents.map(ev => {
+                    const tk = KIND_TOKENS[getEventKind(ev)] || KIND_TOKENS.task;
+                    return (
+                      <div key={ev.id} style={{
+                        display: "grid", gridTemplateColumns: "auto 1fr auto",
+                        alignItems: "center", gap: 10, padding: "10px 12px",
+                        borderRadius: 8, background: "var(--bg-elev-2)",
+                        border: "1px solid var(--line-soft)",
+                        borderLeft: `2px solid ${tk.color}`,
+                      }}>
+                        <span style={{
+                          width: 22, height: 22, borderRadius: 6,
+                          background: "var(--bg-elev-2)", color: tk.color,
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          <Calendar size={11} strokeWidth={1.7} />
+                        </span>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500 }}>{ev.title}</div>
+                          <div className="mono" style={{ fontSize: 10, color: tk.color, textTransform: "uppercase", letterSpacing: ".06em", marginTop: 2 }}>
+                            {tk.label}
+                          </div>
+                        </div>
+                        <button className="btn-v2-icon"><MoreHorizontal size={13} strokeWidth={1.5} /></button>
+                      </div>
+                    );
+                  })}
+                  {selectedTasks.map(task => (
+                    <div key={task.id} style={{
+                      display: "grid", gridTemplateColumns: "auto 1fr auto",
+                      alignItems: "center", gap: 10, padding: "10px 12px",
+                      borderRadius: 8, background: "var(--bg-elev-2)",
+                      border: "1px solid var(--line-soft)",
+                      borderLeft: "2px solid var(--v2-accent)",
+                    }}>
+                      <Tickbox done={task.status === "COMPLETED"} onClick={() => toggleTaskStatus(task)} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{
+                          fontSize: 13, fontWeight: 500,
+                          textDecoration: task.status === "COMPLETED" ? "line-through" : "none",
+                          color: task.status === "COMPLETED" ? "var(--ink-3)" : "var(--ink)",
+                        }}>
+                          {task.title}
+                        </div>
+                        <div className="mono" style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2, display: "flex", gap: 6, alignItems: "center" }}>
+                          {task.estimatedMinutes && (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                              <Clock size={9} strokeWidth={1.5} /> {task.estimatedMinutes}m
+                            </span>
+                          )}
+                          {task.goal && <span>{task.goal.title}</span>}
+                        </div>
+                      </div>
+                      <button className="btn-v2-icon"><MoreHorizontal size={13} strokeWidth={1.5} /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Mini month breakdown */}
+            <div className="card-v2" style={{ padding: 18 }}>
+              <div className="eyebrow" style={{ marginBottom: 12 }}>Breakdown &middot; {MONTHS[currentMonth.getMonth()]}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {Object.entries(kindCounts).map(([k, count]) => {
+                  const tk = KIND_TOKENS[k] || KIND_TOKENS.task;
+                  return (
+                    <div key={k} style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: 10 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: 2, background: tk.color }} />
+                      <span style={{ fontSize: 12.5, color: "var(--ink-2)", textTransform: "capitalize" }}>{tk.label}</span>
+                      <span className="mono" style={{ fontSize: 12, color: "var(--ink)" }}>{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* Drag overlay */}
+        <DragOverlay>
+          {activeTask && (
+            <div style={{
+              fontSize: 11, padding: "2px 8px", borderRadius: 4,
+              background: "var(--bg-elev)", border: "1px solid var(--line)",
+              boxShadow: "var(--shadow-lg)", maxWidth: 140, overflow: "hidden",
+              textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
+              {activeTask.title}
+            </div>
+          )}
+          {activeEvent && (
+            <div style={{
+              fontSize: 11, padding: "2px 8px", borderRadius: 4,
+              background: "var(--bg-elev)", border: "1px solid var(--line)",
+              boxShadow: "var(--shadow-lg)", maxWidth: 140, overflow: "hidden",
+              textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
+              {activeEvent.title}
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }

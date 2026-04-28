@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,36 +25,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { TaskList } from "@/components/tasks/task-list";
 import { TaskForm } from "@/components/tasks/task-form";
 import { TaskEditForm } from "@/components/tasks/task-edit-form";
 import { DraftReviewModal } from "@/components/tasks/draft-review-modal";
 import {
-  Sparkles,
-  Loader2,
-  CalendarDays,
-  ChevronDown,
-  CalendarRange,
-  Calendar,
-  Check,
-  ClipboardList,
+  Sparkles, Loader2, ChevronDown, CalendarRange, Calendar,
+  Check, ClipboardList, Plus, Clock, Pencil, MoreHorizontal,
+  ChevronRight, FileText, Play, ArrowUpRight,
 } from "lucide-react";
 import {
-  startOfWeek,
-  endOfWeek,
-  addWeeks,
-  format,
-  addDays,
-  isSameDay,
-  isSameWeek,
-  isAfter,
-  isBefore,
+  startOfWeek, endOfWeek, addWeeks, format, addDays,
+  isSameDay, isSameWeek, isAfter, isBefore,
 } from "date-fns";
+import { Tickbox, PriorityPill, SegmentedControl, ProgressBar } from "@/components/v2/primitives";
 import type { TaskWithGoal } from "@/lib/types";
 import type { Goal } from "@prisma/client";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useSettings } from "@/components/layout/settings-context";
-import { TourButton } from "@/components/layout/tour-button";
 
 type RangeType = "weekly" | "monthly";
 type ViewScope = "week" | "month";
@@ -70,15 +56,9 @@ export default function PlanPage() {
   const [editingTask, setEditingTask] = useState<TaskWithGoal | null>(null);
   const [loading, setLoading] = useState(true);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
-
-  // View scope (independent of plan generation) — persisted
   const [viewScope, setViewScope] = useLocalStorage<ViewScope>("plan-view-scope", "week");
-
-  // Draft tasks
   const [draftTasks, setDraftTasks] = useState<TaskWithGoal[]>([]);
   const [showDraftReview, setShowDraftReview] = useState(false);
-
-  // Plan generation configuration
   const [showGoalPicker, setShowGoalPicker] = useState(false);
   const [selectedGoalIds, setSelectedGoalIds] = useState<Set<string>>(new Set());
   const [pendingRangeType, setPendingRangeType] = useState<RangeType>("weekly");
@@ -94,12 +74,9 @@ export default function PlanPage() {
     };
   }, [weekStartsOn]);
 
-  // Always fetch the full 4-week range so scope toggle is instant
   const loadTasks = useCallback(async () => {
     const [tasksRes, goalsRes, draftsRes] = await Promise.all([
-      fetch(
-        `/api/tasks?from=${weekStart.toISOString()}&to=${monthEnd.toISOString()}`
-      ),
+      fetch(`/api/tasks?from=${weekStart.toISOString()}&to=${monthEnd.toISOString()}`),
       fetch("/api/goals"),
       fetch("/api/tasks?status=DRAFT"),
     ]);
@@ -110,18 +87,13 @@ export default function PlanPage() {
     setLoading(false);
   }, [weekStart, monthEnd]);
 
-  useEffect(() => {
-    setLoading(true);
-    loadTasks();
-  }, [loadTasks]);
+  useEffect(() => { setLoading(true); loadTasks(); }, [loadTasks]);
 
-  // Scroll to today's card once after initial load
   const initialScrollDone = useRef(false);
   useEffect(() => {
     if (!loading && !initialScrollDone.current) {
       initialScrollDone.current = true;
-      const el = document.getElementById("plan-today");
-      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("plan-today")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [loading]);
 
@@ -135,24 +107,17 @@ export default function PlanPage() {
   const handleGenerate = async () => {
     setShowGoalPicker(false);
     setGenerating(true);
-
     try {
       const res = await fetch("/api/ai/generate-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          planStart: planStartDate
-            ? new Date(planStartDate).toISOString()
-            : weekStart.toISOString(),
-          planEnd: planEndDate
-            ? new Date(planEndDate).toISOString()
-            : weekEnd.toISOString(),
+          planStart: planStartDate ? new Date(planStartDate).toISOString() : weekStart.toISOString(),
+          planEnd: planEndDate ? new Date(planEndDate).toISOString() : weekEnd.toISOString(),
           goalIds: Array.from(selectedGoalIds),
         }),
       });
-
       if (!res.ok) throw new Error("Failed to generate plan");
-
       const data = await res.json();
       setPlanSummary(data.plan.summary);
       setFocusAreas(data.plan.focusAreas || []);
@@ -160,22 +125,16 @@ export default function PlanPage() {
       setShowDraftReview(true);
     } catch (error) {
       console.error("Error generating plan:", error);
-      alert(
-        "Failed to generate plan. Make sure your ANTHROPIC_API_KEY is configured."
-      );
+      alert("Failed to generate plan. Make sure your ANTHROPIC_API_KEY is configured.");
     } finally {
       setGenerating(false);
     }
   };
 
   const toggleGoalSelection = (goalId: string) => {
-    setSelectedGoalIds((prev) => {
+    setSelectedGoalIds(prev => {
       const next = new Set(prev);
-      if (next.has(goalId)) {
-        next.delete(goalId);
-      } else {
-        next.add(goalId);
-      }
+      next.has(goalId) ? next.delete(goalId) : next.add(goalId);
       return next;
     });
   };
@@ -214,14 +173,11 @@ export default function PlanPage() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        id: data.id,
-        title: data.title,
+        id: data.id, title: data.title,
         description: data.description || null,
         priority: data.priority,
         scheduledDate: data.scheduledDate || null,
-        estimatedMinutes: data.estimatedMinutes
-          ? parseInt(data.estimatedMinutes)
-          : null,
+        estimatedMinutes: data.estimatedMinutes ? parseInt(data.estimatedMinutes) : null,
         goalId: data.goalId || null,
       }),
     });
@@ -229,161 +185,250 @@ export default function PlanPage() {
     loadTasks();
   };
 
-  // Goals with progress >= 100, plus any children of those (regardless of child progress)
   const activeGoals = useMemo(() => {
-    const hidden = new Set(goals.filter((g) => g.progress >= 100).map((g) => g.id));
+    const hidden = new Set(goals.filter(g => g.progress >= 100).map(g => g.id));
     let changed = true;
     while (changed) {
       changed = false;
-      goals.forEach((g) => {
+      goals.forEach(g => {
         if (!hidden.has(g.id) && g.parentId && hidden.has(g.parentId)) {
           hidden.add(g.id);
           changed = true;
         }
       });
     }
-    return goals.filter((g) => !hidden.has(g.id));
+    return goals.filter(g => !hidden.has(g.id));
   }, [goals]);
 
-  // Filter tasks based on current view scope
   const visibleTasks = useMemo(() => {
     if (viewScope === "week") {
-      return tasks.filter((t) => {
+      return tasks.filter(t => {
         if (!t.scheduledDate) return false;
         const d = new Date(t.scheduledDate);
-        return (
-          (isAfter(d, weekStart) || isSameDay(d, weekStart)) &&
-          (isBefore(d, weekEnd) || isSameDay(d, weekEnd))
-        );
+        return (isAfter(d, weekStart) || isSameDay(d, weekStart)) && (isBefore(d, weekEnd) || isSameDay(d, weekEnd));
       });
     }
     return tasks;
   }, [tasks, viewScope, weekStart, weekEnd]);
 
-  // Compute days for the active range
   const totalDays = viewScope === "month" ? 28 : 7;
-  const days = useMemo(
-    () => Array.from({ length: totalDays }, (_, i) => addDays(weekStart, i)),
-    [viewScope, totalDays, weekStart]
-  );
+  const days = useMemo(() => Array.from({ length: totalDays }, (_, i) => addDays(weekStart, i)), [totalDays, weekStart]);
 
-  // Group days by week for monthly view
-  const weeks = useMemo(() => {
-    if (viewScope !== "month") return null;
-    const result: { weekStart: Date; weekEnd: Date; days: Date[] }[] = [];
-    for (let w = 0; w < 4; w++) {
-      const ws = addWeeks(weekStart, w);
-      const we = endOfWeek(ws, { weekStartsOn });
-      const weekDays = days.filter((d) =>
-        isSameWeek(d, ws, { weekStartsOn })
-      );
-      result.push({ weekStart: ws, weekEnd: we, days: weekDays });
-    }
-    return result;
-  }, [viewScope, days, weekStart, weekStartsOn]);
+  const completedCount = visibleTasks.filter(t => t.status === "COMPLETED").length;
+  const totalHrs = useMemo(() => {
+    const mins = visibleTasks.reduce((s, t) => s + (t.estimatedMinutes || 0), 0);
+    return (mins / 60).toFixed(1);
+  }, [visibleTasks]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-pulse text-muted-foreground">Loading plan...</div>
+      <div className="page-v2 fade-up flex items-center justify-center" style={{ minHeight: 400 }}>
+        <div className="mono" style={{ color: "var(--ink-3)", fontSize: 13 }}>Loading plan...</div>
       </div>
     );
   }
 
-  const rangeLabel =
-    viewScope === "month"
-      ? `${format(weekStart, "MMM d")} - ${format(monthEnd, "MMM d, yyyy")}`
-      : `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
-
-  const completedCount = visibleTasks.filter(
-    (t) => t.status === "COMPLETED"
-  ).length;
-
   return (
-    <div className="space-y-6">
-      <div className="sticky -top-6 z-10 -mx-6 px-6 pt-6 pb-4 bg-background/95 backdrop-blur-sm border-b border-border/40">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="page-v2 fade-up">
+      {/* PAGE HEADER */}
+      <div className="flex items-end justify-between" style={{
+        paddingBottom: "var(--sp-6)", marginBottom: "var(--sp-6)",
+        borderBottom: "1px solid var(--line)", gap: "var(--sp-4)",
+      }}>
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">Plan</h1>
-            {/* View scope toggle */}
-            <div id="tour-plan-view-scope" className="inline-flex items-center rounded-lg border bg-muted p-0.5">
-              <button
-                onClick={() => setViewScope("week")}
-                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  viewScope === "week"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Calendar className="h-3.5 w-3.5" />
-                This Week
-              </button>
-              <button
-                onClick={() => setViewScope("month")}
-                className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  viewScope === "month"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <CalendarRange className="h-3.5 w-3.5" />
-                4 Weeks
-              </button>
-            </div>
-          </div>
-          <p className="text-muted-foreground">
-            {rangeLabel}
-            <span className="ml-2 text-xs">
-              ({completedCount}/{visibleTasks.length} tasks done)
+          <h1 style={{ fontSize: 24, fontWeight: 500, letterSpacing: "-0.02em", margin: 0 }}>
+            Weekly Plan
+          </h1>
+          <p style={{ margin: "4px 0 0", color: "var(--ink-3)", fontSize: 13 }}>
+            <span className="mono" style={{ color: "var(--ink-2)" }}>
+              {format(weekStart, "MMM d")} – {format(viewScope === "month" ? monthEnd : weekEnd, "MMM d, yyyy")}
             </span>
+            {" · "}
+            <span className="mono">{completedCount}/{visibleTasks.length} done</span>
+            {" · "}
+            <span className="mono" style={{ color: "var(--ink-2)" }}>~{totalHrs} hrs planned</span>
           </p>
         </div>
-        <div className="flex gap-2 items-center">
-          <TourButton tourId="weekly-plan" autoStart={tasks.length === 0} />
+        <div className="flex gap-2">
+          <SegmentedControl
+            value={viewScope}
+            options={[
+              { value: "week" as ViewScope, label: "This week" },
+              { value: "month" as ViewScope, label: "4 weeks" },
+            ]}
+            onChange={setViewScope}
+          />
           {draftTasks.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDraftReview(true)}
-              className="border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
-            >
-              <ClipboardList className="mr-1.5 h-3.5 w-3.5" />
+            <button className="btn-v2 btn-v2-sm" onClick={() => setShowDraftReview(true)}>
+              <ClipboardList size={13} strokeWidth={1.5} />
               Review {draftTasks.length} draft{draftTasks.length !== 1 ? "s" : ""}
-            </Button>
+            </button>
           )}
-          <div id="tour-add-task"><TaskForm goals={goals} onSubmit={handleCreateTask} /></div>
+          <TaskForm goals={goals} onSubmit={handleCreateTask} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button id="tour-generate-plan" size="sm" disabled={generating}>
-                {generating ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="mr-2 h-4 w-4" />
-                )}
-                {generating ? "Generating..." : "Generate Plan"}
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
+              <button className="btn-v2 btn-v2-sm btn-v2-accent" disabled={generating}>
+                {generating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} strokeWidth={1.5} />}
+                {generating ? "Generating..." : "Re-plan"}
+                <ChevronDown size={11} strokeWidth={1.5} />
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => handleRequestGenerate("weekly")}>
-                <Calendar className="mr-2 h-4 w-4" />
-                Weekly Plan
-                <span className="ml-auto text-xs text-muted-foreground">
-                  This week
-                </span>
+                <Calendar className="mr-2 h-4 w-4" /> Weekly Plan
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleRequestGenerate("monthly")}>
-                <CalendarRange className="mr-2 h-4 w-4" />
-                Monthly Plan
-                <span className="ml-auto text-xs text-muted-foreground">
-                  4 weeks
-                </span>
+                <CalendarRange className="mr-2 h-4 w-4" /> Monthly Plan
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+
+      {/* AI Plan Banner */}
+      {planSummary && (
+        <div className="card-v2 flex gap-3 items-center" style={{
+          padding: "12px 16px", marginBottom: 18,
+          borderColor: "var(--v2-accent)", background: "var(--accent-soft)",
+        }}>
+          <Sparkles size={16} strokeWidth={1.5} style={{ color: "var(--v2-accent)", flexShrink: 0 }} />
+          <div className="flex-1" style={{ fontSize: 13 }}>
+            <span style={{ fontWeight: 500 }}>AI plan generated · </span>
+            <span style={{ color: "var(--ink-2)" }}>{planSummary}</span>
+          </div>
+          {focusAreas.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {focusAreas.map((a, i) => <span key={i} className="pill-v2">{a}</span>)}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* DAY CARDS */}
+      <div className="flex flex-col gap-2">
+        {days.map(day => {
+          const dayTasks = visibleTasks.filter(t =>
+            t.scheduledDate && isSameDay(new Date(t.scheduledDate), day)
+          );
+          const isToday = isSameDay(day, new Date());
+          const dayDone = dayTasks.filter(t => t.status === "COMPLETED").length;
+          const dayTotal = dayTasks.length;
+          const allDone = dayDone === dayTotal && dayTotal > 0;
+
+          return (
+            <div
+              key={day.toISOString()}
+              id={isToday ? "plan-today" : undefined}
+              className="card-v2 scroll-mt-28"
+              style={{
+                padding: 0, overflow: "hidden",
+                borderColor: isToday ? "var(--v2-accent)" : "var(--line)",
+              }}
+            >
+              <div style={{ display: "grid", gridTemplateColumns: "120px 1fr" }}>
+                {/* Date rail */}
+                <div style={{
+                  padding: 16,
+                  borderRight: "1px solid var(--line-soft)",
+                  background: isToday ? "var(--accent-soft)" : "var(--bg)",
+                  display: "flex", flexDirection: "column", gap: 4,
+                }}>
+                  <div className="mono" style={{
+                    fontSize: 10, letterSpacing: ".07em", textTransform: "uppercase",
+                    color: isToday ? "var(--v2-accent)" : "var(--ink-3)",
+                    fontWeight: isToday ? 600 : 400,
+                  }}>
+                    {format(day, "EEE")}{isToday ? " · TODAY" : ""}
+                  </div>
+                  <div className="mono" style={{
+                    fontSize: 26, fontWeight: 500, letterSpacing: "-0.02em",
+                    color: allDone ? "var(--ink-3)" : "var(--ink)",
+                    lineHeight: 1,
+                  }}>
+                    {format(day, "d")}
+                  </div>
+                  <div className="mt-auto flex items-center gap-1.5">
+                    <ProgressBar
+                      value={dayTotal ? (dayDone / dayTotal) * 100 : 0}
+                      height={3}
+                      color={allDone ? "var(--v2-success)" : isToday ? "var(--v2-accent)" : "var(--ink-3)"}
+                    />
+                    <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>{dayDone}/{dayTotal}</span>
+                  </div>
+                </div>
+
+                {/* Tasks */}
+                <div style={{ padding: "8px 6px" }}>
+                  {dayTasks.length === 0 ? (
+                    <div style={{ padding: "16px 14px", color: "var(--ink-4)", fontSize: 12 }}>No tasks</div>
+                  ) : (
+                    dayTasks.map(t => {
+                      const isDone = t.status === "COMPLETED";
+                      return (
+                        <div key={t.id} style={{
+                          display: "grid", gridTemplateColumns: "auto 1fr auto",
+                          gap: 12, padding: "12px 14px", borderRadius: 10,
+                        }}
+                          className="hover:bg-[var(--hover)] transition-colors"
+                        >
+                          <Tickbox
+                            done={isDone}
+                            onClick={() => handleStatusChange(t.id, isDone ? "PENDING" : "COMPLETED")}
+                          />
+                          <div className="min-w-0">
+                            <div style={{
+                              fontSize: 14, fontWeight: 500,
+                              textDecoration: isDone ? "line-through" : "none",
+                              color: isDone ? "var(--ink-3)" : "var(--ink)",
+                            }}>
+                              {t.title}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1" style={{ color: "var(--ink-3)", fontSize: 12 }}>
+                              {t.estimatedMinutes && (
+                                <span className="mono inline-flex items-center gap-1">
+                                  <Clock size={10} strokeWidth={1.5} /> {t.estimatedMinutes}m
+                                </span>
+                              )}
+                              {t.estimatedMinutes && <span style={{ color: "var(--ink-4)" }}>·</span>}
+                              <PriorityPill level={t.priority} />
+                              {t.goal && (
+                                <>
+                                  <span style={{ color: "var(--ink-4)" }}>·</span>
+                                  <span style={{ fontSize: 11.5 }}>{t.goal.title}</span>
+                                </>
+                              )}
+                              {t.studyNote && (
+                                <>
+                                  <span style={{ color: "var(--ink-4)" }}>·</span>
+                                  <span className="pill-v2" style={{ height: 18, fontSize: 10 }}>
+                                    <FileText size={9} strokeWidth={1.5} /> note
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-0.5 items-center">
+                            {isToday && !isDone && (
+                              <button className="btn-v2 btn-v2-sm btn-v2-accent" style={{ marginRight: 4 }}>
+                                <Play size={11} strokeWidth={1.5} /> Focus
+                              </button>
+                            )}
+                            <button className="btn-v2-icon" onClick={() => setEditingTask(t)}>
+                              <Pencil size={13} strokeWidth={1.5} />
+                            </button>
+                            <button className="btn-v2-icon" onClick={() => setTaskToDelete(t.id)}>
+                              <MoreHorizontal size={13} strokeWidth={1.5} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Goal picker dialog */}
@@ -391,8 +436,7 @@ export default function PlanPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              Configure {pendingRangeType === "monthly" ? "Monthly" : "Weekly"}{" "}
-              Plan
+              Configure {pendingRangeType === "monthly" ? "Monthly" : "Weekly"} Plan
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -401,327 +445,73 @@ export default function PlanPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Start date</label>
-                  <input
-                    type="date"
-                    value={planStartDate}
-                    onChange={(e) => setPlanStartDate(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
+                  <input type="date" value={planStartDate} onChange={e => setPlanStartDate(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">End date</label>
-                  <input
-                    type="date"
-                    value={planEndDate}
-                    onChange={(e) => setPlanEndDate(e.target.value)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
+                  <input type="date" value={planEndDate} onChange={e => setPlanEndDate(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
                 </div>
               </div>
             </div>
             <div>
               <p className="text-sm font-medium mb-2">
-                Select focus goals{" "}
-                <span className="text-muted-foreground font-normal">
-                  (optional — leave empty to balance across all)
-                </span>
+                Select focus goals <span className="text-muted-foreground font-normal">(optional)</span>
               </p>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {activeGoals.map((goal) => {
+                {activeGoals.map(goal => {
                   const isSelected = selectedGoalIds.has(goal.id);
                   return (
-                    <button
-                      key={goal.id}
-                      onClick={() => toggleGoalSelection(goal.id)}
-                      className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                        isSelected
-                          ? "border-primary bg-primary/5"
-                          : "hover:bg-muted/50"
-                      }`}
-                    >
-                      <div
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-                          isSelected
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-muted-foreground/30"
-                        }`}
-                      >
+                    <button key={goal.id} onClick={() => toggleGoalSelection(goal.id)}
+                      className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${isSelected ? "border-primary bg-primary/5" : "hover:bg-muted/50"}`}>
+                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${isSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"}`}>
                         {isSelected && <Check className="h-3 w-3" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {goal.title}
-                        </p>
+                        <p className="text-sm font-medium truncate">{goal.title}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <Badge variant="outline" className="text-xs">
-                            {goal.type}
-                          </Badge>
-                          {goal.category && (
-                            <span className="text-xs text-muted-foreground">
-                              {goal.category}
-                            </span>
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {Math.round(goal.progress)}%
-                          </span>
+                          <Badge variant="outline" className="text-xs">{goal.type}</Badge>
+                          <span className="text-xs text-muted-foreground">{Math.round(goal.progress)}%</span>
                         </div>
                       </div>
                     </button>
                   );
                 })}
-                {activeGoals.length === 0 && (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    {goals.length === 0 ? "No goals yet." : "All goals are completed."} The AI will create a general plan.
-                  </p>
-                )}
               </div>
             </div>
-            {selectedGoalIds.size > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {Array.from(selectedGoalIds).map((id) => {
-                  const g = goals.find((g) => g.id === id);
-                  return g ? (
-                    <Badge key={id} variant="secondary" className="text-xs">
-                      {g.title}
-                    </Badge>
-                  ) : null;
-                })}
-              </div>
-            )}
             <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowGoalPicker(false)}
-              >
-                Cancel
-              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => setShowGoalPicker(false)}>Cancel</Button>
               <Button className="flex-1" onClick={handleGenerate}>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Generate{" "}
-                {pendingRangeType === "monthly" ? "Monthly" : "Weekly"} Plan
+                Generate {pendingRangeType === "monthly" ? "Monthly" : "Weekly"} Plan
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {planSummary && (
-        <Card className="border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/30">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <Sparkles className="mt-0.5 h-5 w-5 text-purple-500 shrink-0" />
-              <div>
-                <p className="text-sm font-medium mb-2">AI Plan Summary</p>
-                <p className="text-sm text-muted-foreground">{planSummary}</p>
-                {focusAreas.length > 0 && (
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    {focusAreas.map((area, i) => (
-                      <Badge key={i} variant="secondary">
-                        {area}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Monthly view: group by week */}
-      {viewScope === "month" && weeks ? (
-        <div className="space-y-6">
-          {weeks.map((week, weekIdx) => {
-            const weekTasks = visibleTasks.filter(
-              (t) =>
-                t.scheduledDate &&
-                isSameWeek(new Date(t.scheduledDate), week.weekStart, {
-                  weekStartsOn,
-                })
-            );
-            const weekCompleted = weekTasks.filter(
-              (t) => t.status === "COMPLETED"
-            ).length;
-            const isCurrentWeek = isSameWeek(new Date(), week.weekStart, {
-              weekStartsOn,
-            });
-
-            return (
-              <div
-                key={weekIdx}
-                className={`rounded-xl border p-4 ${
-                  isCurrentWeek
-                    ? "border-primary/40 bg-primary/[0.02]"
-                    : "border-border"
-                }`}
-              >
-                {/* Week header */}
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold">
-                      Week {weekIdx + 1}
-                    </h2>
-                    <span className="text-sm text-muted-foreground">
-                      {format(week.weekStart, "MMM d")} –{" "}
-                      {format(week.weekEnd, "MMM d")}
-                    </span>
-                    {isCurrentWeek && (
-                      <Badge variant="default" className="text-xs">
-                        Current
-                      </Badge>
-                    )}
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {weekCompleted}/{weekTasks.length} tasks
-                  </span>
-                </div>
-                {/* Days within the week */}
-                <div className="space-y-2">
-                  {week.days.map((day) => {
-                    const dayTasks = visibleTasks.filter(
-                      (t) =>
-                        t.scheduledDate &&
-                        isSameDay(new Date(t.scheduledDate), day)
-                    );
-                    const isToday = isSameDay(day, new Date());
-
-                    return (
-                      <Card
-                        key={day.toISOString()}
-                        id={isToday ? "plan-today" : undefined}
-                        className={`scroll-mt-28 ${isToday ? "border-primary/50 shadow-sm" : ""}`}
-                      >
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <div className="flex items-center gap-2">
-                            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                            <CardTitle className="text-sm font-medium">
-                              {format(day, "EEE, MMM d")}
-                            </CardTitle>
-                            {isToday && (
-                              <Badge variant="default" className="text-xs">
-                                Today
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {
-                              dayTasks.filter(
-                                (t) => t.status === "COMPLETED"
-                              ).length
-                            }
-                            /{dayTasks.length} done
-                          </span>
-                        </CardHeader>
-                        {dayTasks.length > 0 && (
-                          <CardContent>
-                            <TaskList
-                              tasks={dayTasks}
-                              onStatusChange={handleStatusChange}
-                              onEdit={setEditingTask}
-                              onDelete={setTaskToDelete}
-                            />
-                          </CardContent>
-                        )}
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* Weekly view: flat list */
-        <div className="space-y-4">
-          {days.map((day) => {
-            const dayTasks = visibleTasks.filter(
-              (t) =>
-                t.scheduledDate &&
-                isSameDay(new Date(t.scheduledDate), day)
-            );
-            const isToday = isSameDay(day, new Date());
-
-            return (
-              <Card
-                key={day.toISOString()}
-                id={isToday ? "plan-today" : undefined}
-                className={`scroll-mt-28 ${isToday ? "border-primary/50 shadow-sm" : ""}`}
-              >
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                    <CardTitle className="text-sm font-medium">
-                      {format(day, "EEEE, MMM d")}
-                    </CardTitle>
-                    {isToday && (
-                      <Badge variant="default" className="text-xs">
-                        Today
-                      </Badge>
-                    )}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {
-                      dayTasks.filter((t) => t.status === "COMPLETED")
-                        .length
-                    }
-                    /{dayTasks.length} done
-                  </span>
-                </CardHeader>
-                <CardContent>
-                  {dayTasks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-2">
-                      No tasks scheduled
-                    </p>
-                  ) : (
-                    <TaskList
-                      tasks={dayTasks}
-                      onStatusChange={handleStatusChange}
-                      onEdit={setEditingTask}
-                      onDelete={setTaskToDelete}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
       {editingTask && (
         <TaskEditForm
-          task={editingTask}
-          goals={goals}
-          open={!!editingTask}
-          onOpenChange={(open) => {
-            if (!open) setEditingTask(null);
-          }}
+          task={editingTask} goals={goals} open={!!editingTask}
+          onOpenChange={open => { if (!open) setEditingTask(null); }}
           onSubmit={handleEditTask}
         />
       )}
 
       {showDraftReview && draftTasks.length > 0 && (
-        <DraftReviewModal
-          tasks={draftTasks}
-          goals={goals}
-          onClose={() => setShowDraftReview(false)}
-          onRefresh={loadTasks}
-        />
+        <DraftReviewModal tasks={draftTasks} goals={goals} onClose={() => setShowDraftReview(false)} onRefresh={loadTasks} />
       )}
 
-      <AlertDialog open={!!taskToDelete} onOpenChange={(open) => { if (!open) setTaskToDelete(null); }}>
+      <AlertDialog open={!!taskToDelete} onOpenChange={open => { if (!open) setTaskToDelete(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Task?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the task. This action cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This will permanently delete the task.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirmed} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDeleteConfirmed} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

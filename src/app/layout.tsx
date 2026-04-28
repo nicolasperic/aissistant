@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif, Caveat, Kalam } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { SettingsProvider } from "@/components/layout/settings-context";
+import { V2Provider } from "@/components/layout/v2-context";
 import { OnboardingProvider } from "@/components/layout/onboarding-context";
-import { Sidebar, MobileNav } from "@/components/layout/sidebar";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geistSans = Geist({
@@ -15,6 +15,25 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  weight: "400",
+  style: "italic",
+  subsets: ["latin"],
+});
+
+const caveat = Caveat({
+  variable: "--font-caveat",
+  weight: ["500", "600", "700"],
+  subsets: ["latin"],
+});
+
+const kalam = Kalam({
+  variable: "--font-kalam",
+  weight: ["400", "700"],
   subsets: ["latin"],
 });
 
@@ -31,29 +50,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${caveat.variable} ${kalam.variable} antialiased`}
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
           <SettingsProvider>
+          <V2Provider>
           <OnboardingProvider>
           <TooltipProvider>
-            <div className="flex h-screen overflow-hidden">
-              <Sidebar />
-              <div className="flex flex-1 flex-col overflow-hidden">
-                <Header />
-                <main className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6">
-                  {children}
-                </main>
-              </div>
-            </div>
-            <MobileNav />
+            <AppShell>
+              {children}
+            </AppShell>
           </TooltipProvider>
           </OnboardingProvider>
+          </V2Provider>
           </SettingsProvider>
         </ThemeProvider>
       </body>
