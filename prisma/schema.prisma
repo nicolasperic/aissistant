@@ -131,13 +131,33 @@ model Reward {
 }
 
 model UserStats {
-  id                  String    @id @default("singleton")
-  totalPoints         Int       @default(0)
-  currentStreak       Int       @default(0)
-  longestStreak       Int       @default(0)
-  lastActiveDate      DateTime?
-  completedTourSteps  String[]  @default([])
-  updatedAt           DateTime  @updatedAt
+  id                    String    @id @default("singleton")
+  totalPoints           Int       @default(0)
+  currentStreak         Int       @default(0)
+  longestStreak         Int       @default(0)
+  lastActiveDate        DateTime?
+  completedTourSteps    String[]  @default([])
+  onboardingCompleted   Boolean   @default(false)
+  updatedAt             DateTime  @updatedAt
+}
+
+// ─── User Certification Status ────────────────────────────────────────────────
+
+enum UserCertStatus {
+  PASSED
+  PREPARING
+  NOT_INTERESTED
+}
+
+model UserCertification {
+  id          String         @id @default(cuid())
+  certCode    String         @unique
+  status      UserCertStatus
+  passedAt    DateTime?
+  examDate    DateTime?
+  goalId      String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }
 
 model AiContext {

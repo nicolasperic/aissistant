@@ -15,9 +15,11 @@ import { AlertCircle, Calendar, Sparkles } from "lucide-react";
 import type { Goal, Event, UserStats } from "@prisma/client";
 import type { TaskWithGoal } from "@/lib/types";
 import { useSettings } from "@/components/layout/settings-context";
+import { useCelebration } from "@/components/rewards/badge-celebration";
 
 export default function Dashboard() {
   const { settings: { weekStartsOn, quarterlyMonthsBefore, quarterlyMonthsAfter, weeklyWeeksBefore, weeklyWeeksAfter } } = useSettings();
+  const { celebrate } = useCelebration();
   const today = new Date();
   const [weeklyStats, setWeeklyStats] = useState({ completedTasks: 0, totalTasks: 0 });
   const [todayTasks, setTodayTasks] = useState<TaskWithGoal[]>([]);
@@ -118,11 +120,13 @@ export default function Dashboard() {
   }, [fetchTodayTasks, fetchGoals, ws, we]);
 
   const handleStatusChange = async (id: string, status: string) => {
-    await fetch("/api/tasks", {
+    const res = await fetch("/api/tasks", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
     });
+    const data = await res.json();
+    if (data.newBadges?.length) celebrate(data.newBadges);
     await Promise.all([fetchTodayTasks(), fetchGoals()]);
   };
 

@@ -65,7 +65,7 @@ export function Sidebar() {
         {!collapsed && (
           <>
             <Sparkles className="h-5 w-5 text-primary shrink-0" />
-            <span className="text-lg font-bold flex-1">AIssistant</span>
+            <span className="text-lg font-bold flex-1">Certento</span>
           </>
         )}
         <button

@@ -1,9 +1,11 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
 interface OnboardingContextValue {
   completedSteps: Set<string>;
+  onboardingCompleted: boolean;
   isLoaded: boolean;
   markSeen: (steps: string[]) => Promise<void>;
   resetTour: () => Promise<void>;
@@ -11,6 +13,7 @@ interface OnboardingContextValue {
 
 const OnboardingContext = createContext<OnboardingContextValue>({
   completedSteps: new Set(),
+  onboardingCompleted: true,
   isLoaded: false,
   markSeen: async () => {},
   resetTour: async () => {},
@@ -18,16 +21,27 @@ const OnboardingContext = createContext<OnboardingContextValue>({
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     fetch("/api/onboarding")
       .then((r) => r.json())
       .then((data) => {
         setCompletedSteps(new Set(data.completedTourSteps ?? []));
+        setOnboardingCompleted(data.onboardingCompleted ?? false);
         setIsLoaded(true);
       });
   }, []);
+
+  // Redirect to setup wizard if onboarding hasn't been completed
+  useEffect(() => {
+    if (isLoaded && !onboardingCompleted && pathname !== "/setup") {
+      router.push("/setup");
+    }
+  }, [isLoaded, onboardingCompleted, pathname, router]);
 
   const markSeen = useCallback(async (steps: string[]) => {
     setCompletedSteps((prev) => {
@@ -52,7 +66,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   return (
-    <OnboardingContext.Provider value={{ completedSteps, isLoaded, markSeen, resetTour }}>
+    <OnboardingContext.Provider value={{ completedSteps, onboardingCompleted, isLoaded, markSeen, resetTour }}>
       {children}
     </OnboardingContext.Provider>
   );

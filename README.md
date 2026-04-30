@@ -1,12 +1,12 @@
-# AIssistant
+# Certento
 
-A personal productivity assistant that combines structured goal management with AI-powered planning and weekly reviews. Built for people who want to be intentional about their time — not just track tasks, but understand whether they're making progress toward things that actually matter.
+An AI-powered certification study platform for Magento and Adobe Commerce. Combines structured goal management, AI-generated study plans, study notes, flashcards, practice exams, and weekly reviews — everything you need to prepare for and pass your certifications.
 
 ---
 
 ## What it does
 
-Most productivity tools help you manage tasks. AIssistant helps you manage *purpose*. Goals sit at the center: everything you do — tasks, reviews, weekly plans — connects back to them. AI is woven in to help you plan smarter and reflect honestly.
+Certento helps you plan, study, and track your certification journey. Goals sit at the center: everything you do — tasks, study notes, reviews, weekly plans — connects back to them. AI is woven in to generate study content, plan your weeks, and give you honest feedback on your progress.
 
 ### Goals
 
@@ -62,15 +62,15 @@ Completing tasks and writing reviews earns points and unlocks badges. A streak c
 ### Setup
 
 ```bash
-git clone https://github.com/your-username/aissistant.git
-cd aissistant
+git clone https://github.com/nicotheperico/certento.git
+cd certento
 npm install
 ```
 
 Create a `.env` file:
 
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/aissistant"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/certento"
 ANTHROPIC_API_KEY="sk-ant-..."
 ```
 

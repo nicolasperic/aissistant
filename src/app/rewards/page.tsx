@@ -4,24 +4,32 @@ import { useEffect, useState } from "react";
 import { PointsDisplay } from "@/components/rewards/points-display";
 import { BadgeGrid } from "@/components/rewards/badge-grid";
 import { StreakTracker } from "@/components/rewards/streak-tracker";
+import { CertificationBadges } from "@/components/rewards/certification-badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { POINTS } from "@/lib/rewards";
 import type { BadgeDefinition, Reward, UserStats } from "@/lib/types";
+import type { UserCertification } from "@prisma/client";
 import { TourButton } from "@/components/layout/tour-button";
 
 export default function RewardsPage() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [badges, setBadges] = useState<BadgeDefinition[]>([]);
+  const [userCerts, setUserCerts] = useState<UserCertification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const res = await fetch("/api/rewards");
-      const data = await res.json();
+      const [rewardsRes, certsRes] = await Promise.all([
+        fetch("/api/rewards"),
+        fetch("/api/user-certifications"),
+      ]);
+      const data = await rewardsRes.json();
+      const certs = await certsRes.json();
       setRewards(data.rewards);
       setStats(data.stats);
       setBadges(data.badgeDefinitions);
+      setUserCerts(certs);
       setLoading(false);
     }
     load();
@@ -58,6 +66,10 @@ export default function RewardsPage() {
           longestStreak={stats?.longestStreak ?? 0}
         />
       </div>
+
+      {userCerts.length > 0 && (
+        <CertificationBadges certifications={userCerts} />
+      )}
 
       <div id="tour-rewards-badges">
         <h2 className="text-lg font-semibold mb-4">Badges</h2>

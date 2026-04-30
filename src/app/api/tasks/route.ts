@@ -73,9 +73,12 @@ export async function PUT(req: NextRequest) {
     data.completedAt = null;
   }
 
+  let newBadges: string[] = [];
+
   if (body.status === "COMPLETED" && previousTask?.status !== "COMPLETED") {
     data.completedAt = new Date();
     const result = await onTaskCompleted();
+    newBadges = result.newBadges;
 
     // Check if all daily tasks are complete
     if (previousTask?.scheduledDate) {
@@ -110,7 +113,7 @@ export async function PUT(req: NextRequest) {
     await recalculateGoalProgress(task.goalId);
   }
 
-  return NextResponse.json(task);
+  return NextResponse.json({ ...task, newBadges });
 }
 
 export async function DELETE(req: NextRequest) {

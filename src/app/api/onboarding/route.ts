@@ -3,7 +3,28 @@ import { db } from "@/lib/db";
 
 export async function GET() {
   const stats = await db.userStats.findUnique({ where: { id: "singleton" } });
-  return NextResponse.json({ completedTourSteps: stats?.completedTourSteps ?? [] });
+
+  // If onboarding flag is explicitly set, use it.
+  // Otherwise, check if goals exist — existing users who already have data
+  // shouldn't be forced through onboarding.
+  let onboardingCompleted = stats?.onboardingCompleted ?? false;
+  if (!onboardingCompleted) {
+    const goalCount = await db.goal.count();
+    if (goalCount > 0) {
+      onboardingCompleted = true;
+      // Auto-mark onboarding as completed for existing users
+      await db.userStats.upsert({
+        where: { id: "singleton" },
+        create: { id: "singleton", onboardingCompleted: true },
+        update: { onboardingCompleted: true },
+      });
+    }
+  }
+
+  return NextResponse.json({
+    completedTourSteps: stats?.completedTourSteps ?? [],
+    onboardingCompleted,
+  });
 }
 
 export async function POST(req: Request) {

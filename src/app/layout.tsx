@@ -7,6 +7,7 @@ import { OnboardingProvider } from "@/components/layout/onboarding-context";
 import { Sidebar, MobileNav } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CelebrationProvider } from "@/components/rewards/badge-celebration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AIssistant - AI Life Planning",
-  description: "AI-powered life planning assistant for goals, tasks, and certifications",
+  title: "Certento - AI-Powered Certification Study Platform",
+  description: "AI-powered certification study platform for Magento, Adobe Commerce, and more",
 };
 
 export default function RootLayout({
@@ -42,6 +43,7 @@ export default function RootLayout({
           <SettingsProvider>
           <OnboardingProvider>
           <TooltipProvider>
+          <CelebrationProvider>
             <div className="flex h-screen overflow-hidden">
               <Sidebar />
               <div className="flex flex-1 flex-col overflow-hidden">
@@ -52,6 +54,7 @@ export default function RootLayout({
               </div>
             </div>
             <MobileNav />
+          </CelebrationProvider>
           </TooltipProvider>
           </OnboardingProvider>
           </SettingsProvider>

@@ -7,7 +7,7 @@ export type Settings = {
   weeklyWeeksAfter: number;
 };
 
-const STORAGE_KEY = "aissistant:settings";
+const STORAGE_KEY = "certento:settings";
 const defaults: Settings = {
   weekStartsOn: 6, // Saturday
   quarterlyMonthsBefore: 4,

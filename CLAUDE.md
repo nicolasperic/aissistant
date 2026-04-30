@@ -21,7 +21,7 @@ Requires two environment variables (see `.env.example`):
 
 ## Architecture
 
-**AIssistant** is a single Next.js 16 App Router application (not a monorepo) — a personal productivity tool combining goal management, AI-generated weekly plans, and reviews.
+**Certento** is a single Next.js 16 App Router application (not a monorepo) — an AI-powered certification study platform combining goal management, study plans, and reviews.
 
 ### Key directories
 

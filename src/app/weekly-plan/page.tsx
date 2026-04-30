@@ -56,12 +56,14 @@ import type { Goal } from "@prisma/client";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useSettings } from "@/components/layout/settings-context";
 import { TourButton } from "@/components/layout/tour-button";
+import { useCelebration } from "@/components/rewards/badge-celebration";
 
 type RangeType = "weekly" | "monthly";
 type ViewScope = "week" | "month";
 
 export default function PlanPage() {
   const { settings: { weekStartsOn } } = useSettings();
+  const { celebrate } = useCelebration();
   const [tasks, setTasks] = useState<TaskWithGoal[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -181,11 +183,13 @@ export default function PlanPage() {
   };
 
   const handleStatusChange = async (id: string, status: string) => {
-    await fetch("/api/tasks", {
+    const res = await fetch("/api/tasks", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
     });
+    const data = await res.json();
+    if (data.newBadges?.length) celebrate(data.newBadges);
     loadTasks();
   };
 

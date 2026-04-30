@@ -13,6 +13,7 @@ import { TaskForm } from "@/components/tasks/task-form";
 import { TaskEditForm } from "@/components/tasks/task-edit-form";
 import { GoalForm } from "@/components/goals/goal-form";
 import { ArrowLeft, Sparkles } from "lucide-react";
+import { useCelebration } from "@/components/rewards/badge-celebration";
 import Link from "next/link";
 import { format } from "date-fns";
 import type { GoalWithRelations, TaskWithGoal } from "@/lib/types";
@@ -64,12 +65,16 @@ export default function GoalDetailPage() {
     loadData();
   }, [loadData]);
 
+  const { celebrate } = useCelebration();
+
   const handleStatusChange = async (id: string, status: string) => {
-    await fetch("/api/tasks", {
+    const res = await fetch("/api/tasks", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
     });
+    const data = await res.json();
+    if (data.newBadges?.length) celebrate(data.newBadges);
     loadData();
   };
 
