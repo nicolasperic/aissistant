@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { TourButton } from "@/components/layout/tour-button";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { format } from "date-fns";
+import { getCertByCode } from "@/lib/certifications";
 
 interface GoalNode {
   id: string;
@@ -25,6 +26,7 @@ const priorityColors: Record<string, string> = {
 interface StudyNoteListItem {
   id: string;
   title: string;
+  certCode: string | null;
   position: number;
   validated: boolean;
   createdAt: string;
@@ -35,10 +37,10 @@ interface StudyNoteListItem {
     scheduledDate: string | null;
     estimatedMinutes: number | null;
     goal: GoalNode | null;
-  };
+  } | null;
 }
 
-interface QuarterlyGroup {
+interface NoteGroup {
   id: string;
   title: string;
   notes: StudyNoteListItem[];
@@ -50,13 +52,23 @@ function findQuarterlyAncestor(goal: GoalNode | null): { id: string; title: stri
   return findQuarterlyAncestor(goal.parent);
 }
 
-function groupByQuarterly(notes: StudyNoteListItem[]): QuarterlyGroup[] {
-  const map = new Map<string, QuarterlyGroup>();
+function groupNotes(notes: StudyNoteListItem[]): NoteGroup[] {
+  const map = new Map<string, NoteGroup>();
 
   for (const note of notes) {
-    const quarterly = findQuarterlyAncestor(note.task.goal);
-    const key = quarterly?.id ?? "uncategorized";
-    const label = quarterly?.title ?? "Uncategorized";
+    // Prefer certCode for grouping, fall back to quarterly goal ancestor
+    let key: string;
+    let label: string;
+
+    if (note.certCode) {
+      key = `cert-${note.certCode}`;
+      const def = getCertByCode(note.certCode);
+      label = def ? `${def.name} (${def.code})` : note.certCode;
+    } else {
+      const quarterly = findQuarterlyAncestor(note.task?.goal ?? null);
+      key = quarterly?.id ?? "uncategorized";
+      label = quarterly?.title ?? "Uncategorized";
+    }
 
     if (!map.has(key)) {
       map.set(key, { id: key, title: label, notes: [] });
@@ -85,13 +97,13 @@ export default function StudyNotesPage() {
   const groupDraggingIdRef = useRef<string | null>(null);
   const groupDragOverIdRef = useRef<string | null>(null);
 
-  const groups = useMemo(() => groupByQuarterly(notes), [notes]);
+  const groups = useMemo(() => groupNotes(notes), [notes]);
 
   // orderedGroups respects user-defined groupOrder; appends any new groups at the end
   const orderedGroups = useMemo(() => {
     if (groupOrder.length === 0) return groups;
     const map = new Map(groups.map((g) => [g.id, g]));
-    const ordered = groupOrder.map((id) => map.get(id)).filter(Boolean) as QuarterlyGroup[];
+    const ordered = groupOrder.map((id) => map.get(id)).filter(Boolean) as NoteGroup[];
     groups.forEach((g) => {
       if (!groupOrder.includes(g.id)) ordered.push(g);
     });
@@ -128,7 +140,7 @@ export default function StudyNotesPage() {
   const load = useCallback(async () => {
     const res = await fetch("/api/study-notes");
     const data: StudyNoteListItem[] = await res.json();
-    const computedGroups = groupByQuarterly(data);
+    const computedGroups = groupNotes(data);
     setCollapsedGroups(new Set(computedGroups.map((g) => g.id)));
     setNotes(data);
     setLoading(false);
@@ -165,8 +177,14 @@ export default function StudyNotesPage() {
       const fromIndex = prev.findIndex((n) => n.id === fromId);
       const toIndex = prev.findIndex((n) => n.id === toId);
 
-      const fromGroup = findQuarterlyAncestor(prev[fromIndex]?.task.goal)?.id ?? "uncategorized";
-      const toGroup = findQuarterlyAncestor(prev[toIndex]?.task.goal)?.id ?? "uncategorized";
+      const fromNote = prev[fromIndex];
+      const toNote = prev[toIndex];
+      const fromGroup = fromNote?.certCode
+        ? `cert-${fromNote.certCode}`
+        : findQuarterlyAncestor(fromNote?.task?.goal ?? null)?.id ?? "uncategorized";
+      const toGroup = toNote?.certCode
+        ? `cert-${toNote.certCode}`
+        : findQuarterlyAncestor(toNote?.task?.goal ?? null)?.id ?? "uncategorized";
       if (fromGroup !== toGroup || fromGroup !== groupId) return prev;
 
       const updated = [...prev];
@@ -376,14 +394,14 @@ export default function StudyNotesPage() {
                           `}
                         >
                           <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/50 cursor-grab active:cursor-grabbing" />
-                          {note.task.status === "COMPLETED" ? (
+                          {note.task?.status === "COMPLETED" ? (
                             <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
                           ) : (
-                            <Circle className={`h-5 w-5 shrink-0 ${priorityColors[note.task.priority] ?? "text-gray-500"}`} />
+                            <Circle className={`h-5 w-5 shrink-0 ${priorityColors[note.task?.priority ?? "MEDIUM"] ?? "text-gray-500"}`} />
                           )}
                           <Link
                             href={`/study-notes/${note.id}`}
@@ -400,25 +418,32 @@ export default function StudyNotesPage() {
                                 )}
                               </div>
                               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                {note.task.scheduledDate && (
+                                {note.certCode && (
+                                  <Badge variant="outline" className="text-xs h-5 font-mono">
+                                    {note.certCode}
+                                  </Badge>
+                                )}
+                                {note.task?.scheduledDate && (
                                   <span className="text-xs text-muted-foreground">
                                     {format(new Date(note.task.scheduledDate), "MMM d")}
                                   </span>
                                 )}
-                                {note.task.estimatedMinutes && (
+                                {note.task?.estimatedMinutes && (
                                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <Clock className="h-3 w-3" />
                                     {note.task.estimatedMinutes}m
                                   </span>
                                 )}
-                                {note.task.goal && (
+                                {note.task?.goal && (
                                   <Badge variant="outline" className="text-xs h-5">
                                     {note.task.goal.title}
                                   </Badge>
                                 )}
+                                {note.task?.priority && (
                                 <Badge variant="secondary" className={`text-xs h-5 ${priorityColors[note.task.priority] ?? "text-gray-500"}`}>
                                   {note.task.priority}
                                 </Badge>
+                                )}
                                 {note._count.flashcards > 0 && (
                                   <span className="flex items-center gap-1 text-xs text-primary">
                                     <Layers className="h-3 w-3" />

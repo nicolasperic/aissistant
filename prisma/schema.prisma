@@ -72,8 +72,9 @@ model StudyNote {
   id               String      @id @default(cuid())
   title            String
   content          String
-  taskId           String      @unique
-  task             Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  certCode         String?
+  taskId           String?     @unique
+  task             Task?       @relation(fields: [taskId], references: [id], onDelete: SetNull)
   goalId           String?
   bookmarkPosition String?
   validated        Boolean     @default(false)

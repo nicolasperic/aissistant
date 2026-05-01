@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { generateCompletion } from "@/lib/ai";
+import { allCertifications } from "@/lib/certifications";
 
 const SYSTEM_PROMPT = `You are an expert study content creator specializing in technical certifications. Generate comprehensive, well-structured study notes in Markdown format.
 
@@ -58,10 +59,29 @@ export async function POST(req: NextRequest) {
 
   const goalId = task.goalId ?? undefined;
 
+  // Derive certCode from goal hierarchy — walk up to find a matching cert code
+  let certCode: string | null = null;
+  let currentGoal = task.goal;
+  while (currentGoal && !certCode) {
+    const titleUpper = currentGoal.title.toUpperCase();
+    for (const cert of allCertifications) {
+      if (titleUpper.includes(cert.code)) {
+        certCode = cert.code;
+        break;
+      }
+    }
+    if (!certCode && currentGoal.parentId) {
+      currentGoal = await db.goal.findUnique({ where: { id: currentGoal.parentId } });
+    } else {
+      break;
+    }
+  }
+
   const note = await db.studyNote.create({
     data: {
       title: task.title,
       content,
+      certCode,
       taskId: task.id,
       goalId: goalId ?? null,
     },

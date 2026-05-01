@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
         id: true,
         title: true,
         content: true,
+        certCode: true,
         task: {
           select: {
             goal: {
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
   // Extract a snippet around the match for study notes
   const notesWithSnippets = studyNotes.map((note) => {
     const snippet = extractSnippet(note.content, q);
-    const certGoal = note.task?.goal?.parent?.title ?? note.task?.goal?.title ?? null;
+    const certGoal = note.certCode ?? note.task?.goal?.parent?.title ?? note.task?.goal?.title ?? null;
     return {
       id: note.id,
       title: note.title,
