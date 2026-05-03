@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StudyModal, type SessionResult } from "@/components/flashcards/study-modal";
 import { FlashcardForm } from "@/components/flashcards/flashcard-form";
 import { Play, Pencil, Trash2, ChevronRight, Layers } from "lucide-react";
-import type { Flashcard, Goal } from "@prisma/client";
+import type { Flashcard, Goal, StudyNote } from "@prisma/client";
 import { TourButton } from "@/components/layout/tour-button";
 import {
   AlertDialog,
@@ -21,43 +21,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Collect a goal's id and all descendant ids from a flat list
-function getDescendantIds(goalId: string, goals: Goal[]): string[] {
-  const result: string[] = [goalId];
-  const children = goals.filter((g) => g.parentId === goalId);
-  for (const child of children) {
-    result.push(...getDescendantIds(child.id, goals));
-  }
-  return result;
-}
-
-// Build a display label with type prefix for readability
-function goalLabel(goal: Goal, goals: Goal[]): string {
-  const depth = getDepth(goal, goals);
-  const indent = "  ".repeat(depth);
-  return `${indent}[${goal.type}] ${goal.title}`;
-}
-
-function getCertAncestor(goal: Goal, goals: Goal[]): Goal | null {
-  if (goal.type === "QUARTERLY") return goal.shortName ? goal : null;
-  if (!goal.parentId) return null;
-  const parent = goals.find((g) => g.id === goal.parentId);
-  return parent ? getCertAncestor(parent, goals) : null;
-}
-
-function getDepth(goal: Goal, goals: Goal[], depth = 0): number {
-  if (!goal.parentId) return depth;
-  const parent = goals.find((g) => g.id === goal.parentId);
-  return parent ? getDepth(parent, goals, depth + 1) : depth;
-}
-
-const TYPE_ORDER = { YEARLY: 0, QUARTERLY: 1, MONTHLY: 2, WEEKLY: 3 };
+type StudyNoteWithCount = StudyNote & { _count: { flashcards: number } };
 
 export default function FlashcardsPage() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [cards, setCards] = useState<Flashcard[]>([]);
+  const [studyNotes, setStudyNotes] = useState<StudyNoteWithCount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedGoalId, setSelectedGoalId] = useState<string>("");
+  const [selectedCertCode, setSelectedCertCode] = useState<string>("");
+  const [selectedNoteId, setSelectedNoteId] = useState<string>("");
   const [studyOpen, setStudyOpen] = useState(false);
   const [studyCards, setStudyCards] = useState<Flashcard[]>([]);
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
@@ -66,11 +38,7 @@ export default function FlashcardsPage() {
 
   const loadGoals = useCallback(async () => {
     const res = await fetch("/api/goals");
-    const data = await res.json();
-    const sorted = [...data].sort(
-      (a: Goal, b: Goal) => (TYPE_ORDER[a.type] ?? 9) - (TYPE_ORDER[b.type] ?? 9)
-    );
-    setGoals(sorted);
+    setGoals(await res.json());
   }, []);
 
   const loadCards = useCallback(async () => {
@@ -79,48 +47,60 @@ export default function FlashcardsPage() {
     setLoading(false);
   }, []);
 
+  const loadStudyNotes = useCallback(async () => {
+    const res = await fetch("/api/study-notes");
+    setStudyNotes(await res.json());
+  }, []);
+
   useEffect(() => {
     loadGoals();
     loadCards();
-  }, [loadGoals, loadCards]);
+    loadStudyNotes();
+  }, [loadGoals, loadCards, loadStudyNotes]);
 
-  // Cards visible in manage tab (all, or filtered by selected goal scope)
+  // Unique cert codes that have flashcards
+  const certCodes = useMemo(() => {
+    const codes = new Set(cards.map((c) => c.examCode).filter(Boolean) as string[]);
+    return Array.from(codes).sort();
+  }, [cards]);
+
+  // Study notes for the selected certification, sorted by title
+  const filteredNotes = useMemo(() => {
+    if (!selectedCertCode) return [];
+    return studyNotes
+      .filter((n) => n.certCode === selectedCertCode && n._count.flashcards > 0)
+      .sort((a, b) => {
+        const dayA = parseInt(a.title.match(/Day (\d+)/)?.[1] || "999");
+        const dayB = parseInt(b.title.match(/Day (\d+)/)?.[1] || "999");
+        return dayA - dayB;
+      });
+  }, [studyNotes, selectedCertCode]);
+
+  // Cards visible based on cert + optional note filter
   const filteredCards = useMemo(() => {
-    if (!selectedGoalId) return cards;
-    const ids = getDescendantIds(selectedGoalId, goals);
-    return cards.filter((c) => c.goalId && ids.includes(c.goalId));
-  }, [cards, selectedGoalId, goals]);
+    if (selectedNoteId) return cards.filter((c) => c.studyNoteId === selectedNoteId);
+    if (selectedCertCode) return cards.filter((c) => c.examCode === selectedCertCode);
+    return cards;
+  }, [cards, selectedCertCode, selectedNoteId]);
 
   // Stats for selected scope
   const scopeStats = useMemo(() => {
-    const scoped = selectedGoalId
-      ? cards.filter((c) => {
-          const ids = getDescendantIds(selectedGoalId, goals);
-          return c.goalId && ids.includes(c.goalId);
-        })
-      : cards;
     const now = new Date();
-    const due = scoped.filter((c) => !c.nextReviewAt || new Date(c.nextReviewAt) <= now);
-    return { total: scoped.length, due: due.length };
-  }, [cards, selectedGoalId, goals]);
+    const due = filteredCards.filter((c) => !c.nextReviewAt || new Date(c.nextReviewAt) <= now);
+    return { total: filteredCards.length, due: due.length };
+  }, [filteredCards]);
 
-  const goalsWithCards = useMemo(() => {
-    const cardGoalIds = new Set(cards.map((c) => c.goalId).filter(Boolean));
-    return goals.filter((g) =>
-      getDescendantIds(g.id, goals).some((id) => cardGoalIds.has(id))
-    );
-  }, [goals, cards]);
+  const handleCertChange = (v: string) => {
+    setSelectedCertCode(v === "all" ? "" : v);
+    setSelectedNoteId("");
+  };
 
-  const selectedGoal = goals.find((g) => g.id === selectedGoalId);
+  const handleNoteChange = (v: string) => {
+    setSelectedNoteId(v === "all" ? "" : v);
+  };
 
   const handleStartSession = (dueOnly: boolean) => {
-    let pool: Flashcard[];
-    if (selectedGoalId) {
-      const ids = getDescendantIds(selectedGoalId, goals);
-      pool = cards.filter((c) => c.goalId && ids.includes(c.goalId));
-    } else {
-      pool = [...cards];
-    }
+    const pool = [...filteredCards];
     const now = new Date();
     const due = pool.filter((c) => !c.nextReviewAt || new Date(c.nextReviewAt) <= now);
     const notDue = pool.filter((c) => c.nextReviewAt && new Date(c.nextReviewAt) > now);
@@ -183,42 +163,56 @@ export default function FlashcardsPage() {
           <FlashcardForm
             goals={goals}
             onSubmit={handleCreate}
-            defaultGoalId={selectedGoalId}
           />
         </div>
       </div>
 
-      {/* Goal scope selector */}
+      {/* Certification & study note scope selector */}
       <div id="tour-flashcards-scope" className="rounded-lg border bg-card p-4 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 space-y-1">
             <label className="text-sm font-medium">Study scope</label>
             <p className="text-xs text-muted-foreground">
-              Pick a goal to study only cards in that scope, or leave empty for all cards
+              Pick a certification and optionally a study note to focus your session
             </p>
           </div>
-          <Select value={selectedGoalId || "all"} onValueChange={(v) => setSelectedGoalId(v === "all" ? "" : v)}>
-            <SelectTrigger className="w-full sm:w-72">
-              <SelectValue placeholder="All flashcards" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All flashcards</SelectItem>
-              {goalsWithCards.map((g) => {
-                const cert = getCertAncestor(g, goals);
-                return (
-                  <SelectItem key={g.id} value={g.id}>
-                    {cert?.shortName && (
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Select value={selectedCertCode || "all"} onValueChange={handleCertChange}>
+              <SelectTrigger className="w-full sm:w-56">
+                <SelectValue placeholder="All certifications" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All certifications</SelectItem>
+                {certCodes.map((code) => {
+                  const count = cards.filter((c) => c.examCode === code).length;
+                  return (
+                    <SelectItem key={code} value={code}>
                       <Badge variant="secondary" className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 mr-1">
-                        {cert.shortName}
+                        {code}
                       </Badge>
-                    )}
-                    <span className="text-muted-foreground text-xs mr-1">[{g.type}]</span>
-                    {g.title}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+                      <span className="text-xs text-muted-foreground">{count} cards</span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {selectedCertCode && filteredNotes.length > 0 && (
+              <Select value={selectedNoteId || "all"} onValueChange={handleNoteChange}>
+                <SelectTrigger className="w-full sm:w-72">
+                  <SelectValue placeholder="All study notes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All study notes ({filteredNotes.reduce((s, n) => s + n._count.flashcards, 0)} cards)</SelectItem>
+                  {filteredNotes.map((note) => (
+                    <SelectItem key={note.id} value={note.id}>
+                      {note.title}
+                      <span className="text-xs text-muted-foreground ml-1">({note._count.flashcards})</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
 
         {/* Scope stats + start button */}
@@ -295,7 +289,7 @@ export default function FlashcardsPage() {
               ) : (
                 <div className="space-y-2">
                   {tabCards.map((card) => {
-                    const linkedGoal = goals.find((g) => g.id === card.goalId);
+                    const note = studyNotes.find((n) => n.id === card.studyNoteId);
                     const now = new Date();
                     const isDue = !card.nextReviewAt || new Date(card.nextReviewAt) <= now;
                     return (
@@ -308,10 +302,13 @@ export default function FlashcardsPage() {
                           <p className="text-xs text-muted-foreground line-clamp-2">{card.answer}</p>
                           <div className="flex items-center gap-2 pt-1 flex-wrap">
                             <Badge variant="outline" className="text-xs">{card.topic}</Badge>
-                            {linkedGoal && (
-                              <Badge variant="outline" className="text-xs text-muted-foreground">
-                                {linkedGoal.type}: {linkedGoal.title}
+                            {card.examCode && (
+                              <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                {card.examCode}
                               </Badge>
+                            )}
+                            {note && (
+                              <span className="text-xs text-muted-foreground">{note.title}</span>
                             )}
                             {isDue ? (
                               <Badge className="text-xs bg-primary/10 text-primary border-primary/20">

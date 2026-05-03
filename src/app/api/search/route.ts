@@ -8,8 +8,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ studyNotes: [], flashcards: [] });
   }
 
-  const pattern = `%${q}%`;
-
   const [studyNotes, flashcards] = await Promise.all([
     db.studyNote.findMany({
       where: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun, Sparkles } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { SettingsDialog } from "@/components/layout/settings-dialog";
@@ -12,7 +12,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex flex-1 items-center gap-2 md:hidden">
-        <Sparkles className="h-5 w-5 text-primary" />
+        <img src="/logo-32.png" alt="Certento" className="h-5 w-5 rounded" />
         <span className="font-semibold">Certento</span>
       </div>
       <div className="flex flex-1 items-center justify-end gap-2">

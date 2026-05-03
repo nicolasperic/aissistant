@@ -35,7 +35,7 @@ async function main() {
   const q2Goal = await prisma.goal.create({
     data: {
       title: "Pass Adobe Commerce Developer Professional",
-      description: "Study and pass the AD0-E717 exam",
+      description: "Study and pass the AD0-E724 exam",
       type: "QUARTERLY",
       startDate: new Date("2026-04-01"),
       endDate: new Date("2026-06-30"),
@@ -48,7 +48,7 @@ async function main() {
   const q3Goal = await prisma.goal.create({
     data: {
       title: "Pass Adobe Commerce Front-End Developer",
-      description: "Study and pass the AD0-E710 exam",
+      description: "Study and pass the AD0-E726 exam",
       type: "QUARTERLY",
       startDate: new Date("2026-07-01"),
       endDate: new Date("2026-09-30"),
@@ -61,7 +61,7 @@ async function main() {
   const q4Goal = await prisma.goal.create({
     data: {
       title: "Pass Adobe Commerce Architect Master",
-      description: "Study and pass the AD0-E718 exam",
+      description: "Study and pass the AD0-E722 exam",
       type: "QUARTERLY",
       startDate: new Date("2026-10-01"),
       endDate: new Date("2026-12-31"),
@@ -100,7 +100,6 @@ async function main() {
   });
 
   // Create some sample tasks
-  const today = new Date();
   const tasks = [
     {
       title: "Read Module 1: Commerce Fundamentals",
@@ -152,19 +151,6 @@ async function main() {
     await prisma.task.create({ data: task });
   }
 
-  // Add a health-related yearly goal
-  const healthGoal = await prisma.goal.create({
-    data: {
-      title: "Improve Physical Fitness",
-      description: "Exercise regularly and maintain healthy habits",
-      type: "YEARLY",
-      startDate: new Date("2026-01-01"),
-      endDate: new Date("2026-12-31"),
-      category: "health",
-      progress: 15,
-    },
-  });
-
   // Create certification exam events
   const certEvents = [
     {
@@ -174,19 +160,19 @@ async function main() {
       category: "certification",
     },
     {
-      title: "Adobe Commerce Developer Professional Exam (AD0-E717)",
+      title: "Adobe Commerce Developer Professional Exam (AD0-E724)",
       description: "Developer professional certification",
       eventDate: new Date("2026-06-15"),
       category: "certification",
     },
     {
-      title: "Adobe Commerce Front-End Developer Exam (AD0-E710)",
+      title: "Adobe Commerce Front-End Developer Exam (AD0-E726)",
       description: "Front-end developer specialization",
       eventDate: new Date("2026-09-10"),
       category: "certification",
     },
     {
-      title: "Adobe Commerce Architect Master Exam (AD0-E718)",
+      title: "Adobe Commerce Architect Master Exam (AD0-E722)",
       description: "Master-level architecture certification",
       eventDate: new Date("2026-12-05"),
       category: "certification",
@@ -214,7 +200,6 @@ async function main() {
   console.log(`- 1 monthly and 1 weekly goal`);
   console.log(`- ${tasks.length} sample tasks`);
   console.log(`- ${certEvents.length} certification exam events`);
-  console.log(`- 1 health goal`);
   console.log(`- User stats initialized`);
 }
 

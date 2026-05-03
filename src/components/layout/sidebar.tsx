@@ -11,7 +11,6 @@ import {
   Calendar,
   ClipboardCheck,
   Trophy,
-  Sparkles,
   Layers,
   BookOpen,
   GraduationCap,
@@ -64,7 +63,7 @@ export function Sidebar() {
       <div className="flex h-14 items-center border-b shrink-0 gap-2 px-4">
         {!collapsed && (
           <>
-            <Sparkles className="h-5 w-5 text-primary shrink-0" />
+            <img src="/logo-32.png" alt="Certento" className="h-6 w-6 shrink-0 rounded" />
             <span className="text-lg font-bold flex-1">Certento</span>
           </>
         )}
