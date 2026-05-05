@@ -88,9 +88,9 @@ export const ad0e725: CertDefinition = {
     },
   ],
   exam: {
-    totalQuestions: 60,
-    passingScore: 42,
-    timeLimitMinutes: 120,
+    totalQuestions: 50,
+    passingScore: 39,
+    timeLimitMinutes: 100,
   },
   active: true,
   studyResources: {

@@ -82,7 +82,7 @@ export const ad0e722: CertDefinition = {
   ],
   exam: {
     totalQuestions: 50,
-    passingScore: 34,
+    passingScore: 30,
     timeLimitMinutes: 110,
   },
   active: true,
