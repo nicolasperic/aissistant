@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       description: body.description,
       priority: body.priority || "MEDIUM",
       scheduledDate: body.scheduledDate ? parseDateOnly(body.scheduledDate) : null,
-      estimatedMinutes: body.estimatedMinutes,
+      estimatedMinutes: body.estimatedMinutes ? parseInt(body.estimatedMinutes, 10) || null : null,
       goalId: body.goalId || null,
     },
     include: { goal: true, studyNote: { select: { id: true } } },
@@ -65,18 +65,36 @@ export async function PUT(req: NextRequest) {
   if (body.status !== undefined) data.status = body.status;
   if (body.priority !== undefined) data.priority = body.priority;
   if (body.scheduledDate !== undefined) data.scheduledDate = body.scheduledDate ? parseDateOnly(body.scheduledDate) : null;
-  if (body.estimatedMinutes !== undefined) data.estimatedMinutes = body.estimatedMinutes;
-  if (body.actualMinutes !== undefined) data.actualMinutes = body.actualMinutes;
+  if (body.estimatedMinutes !== undefined) data.estimatedMinutes = body.estimatedMinutes ? parseInt(body.estimatedMinutes, 10) || null : null;
+  if (body.actualMinutes !== undefined) data.actualMinutes = body.actualMinutes ? parseInt(body.actualMinutes, 10) || null : null;
   if (body.goalId !== undefined) data.goalId = body.goalId || null;
 
   if (body.status !== "COMPLETED" && previousTask?.status === "COMPLETED") {
     data.completedAt = null;
   }
 
+  const isCompleting = body.status === "COMPLETED" && previousTask?.status !== "COMPLETED";
+  if (isCompleting) {
+    data.completedAt = new Date();
+  }
+
+  // Update the task FIRST so badge checks see the current state
+  const task = await db.task.update({
+    where: { id: body.id },
+    data,
+    include: { goal: true, studyNote: { select: { id: true } } },
+  });
+
+  // Recalculate goal progress up the hierarchy whenever status changes
+  const statusChanged = body.status !== undefined && body.status !== previousTask?.status;
+  if (statusChanged && task.goalId) {
+    await recalculateGoalProgress(task.goalId);
+  }
+
+  // Now check for badges and points AFTER task and goal progress are saved
   let newBadges: string[] = [];
 
-  if (body.status === "COMPLETED" && previousTask?.status !== "COMPLETED") {
-    data.completedAt = new Date();
+  if (isCompleting) {
     const result = await onTaskCompleted();
     newBadges = result.newBadges;
 
@@ -99,18 +117,6 @@ export async function PUT(req: NextRequest) {
         await awardPoints(POINTS.COMPLETE_ALL_DAILY);
       }
     }
-  }
-
-  const task = await db.task.update({
-    where: { id: body.id },
-    data,
-    include: { goal: true, studyNote: { select: { id: true } } },
-  });
-
-  // Recalculate goal progress up the hierarchy whenever status changes
-  const statusChanged = body.status !== undefined && body.status !== previousTask?.status;
-  if (statusChanged && task.goalId) {
-    await recalculateGoalProgress(task.goalId);
   }
 
   return NextResponse.json({ ...task, newBadges });

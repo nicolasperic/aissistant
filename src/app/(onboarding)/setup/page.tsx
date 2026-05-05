@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useOnboarding } from "@/components/layout/onboarding-context";
 import { GraduationCap, Sparkles, ArrowRight, ArrowLeft, Check, Calendar, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +24,7 @@ const STEPS = ["Welcome", "Certifications", "Schedule", "Summary"] as const;
 
 export default function SetupPage() {
   const router = useRouter();
+  const { completeOnboarding } = useOnboarding();
   const [step, setStep] = useState(0);
   const [selections, setSelections] = useState<Map<string, CertSelection>>(() => {
     const map = new Map<string, CertSelection>();
@@ -95,6 +97,7 @@ export default function SetupPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ certifications }),
       });
+      completeOnboarding();
       router.push("/");
     } catch {
       setSaving(false);

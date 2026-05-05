@@ -34,27 +34,41 @@ export async function POST(req: Request) {
       },
     });
 
-    // Create an Event for each "preparing" cert with an exam date
-    if (cert.status === "PREPARING" && cert.examDate) {
+    // Create a Goal and optionally an Event for each "preparing" cert
+    if (cert.status === "PREPARING") {
       const def = getCertByCode(cert.certCode);
       const name = def?.name ?? cert.certCode;
       const level = def?.level ?? "certification";
-      const title = `${name} Exam (${cert.certCode})`;
 
-      // Avoid duplicates — check if an event with this title already exists
-      const existing = await db.event.findFirst({
-        where: { title },
-      });
-
-      if (!existing) {
-        await db.event.create({
+      // Create a QUARTERLY goal for the cert
+      const goalTitle = `Pass ${name} (${cert.certCode.toUpperCase()})`;
+      const existingGoal = await db.goal.findFirst({ where: { title: goalTitle } });
+      if (!existingGoal) {
+        await db.goal.create({
           data: {
-            title,
-            description: `${level.charAt(0).toUpperCase() + level.slice(1)}-level ${def?.provider === "adobe-commerce" ? "Adobe Commerce " : ""}certification exam.`,
-            eventDate: new Date(cert.examDate + "T00:00:00"),
-            category: "certification",
+            title: goalTitle,
+            type: "QUARTERLY",
+            shortName: cert.certCode.toUpperCase(),
+            startDate: new Date(),
+            endDate: cert.examDate ? new Date(cert.examDate + "T00:00:00") : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
           },
         });
+      }
+
+      // Create an Event if an exam date is set
+      if (cert.examDate) {
+        const eventTitle = `${name} Exam (${cert.certCode})`;
+        const existingEvent = await db.event.findFirst({ where: { title: eventTitle } });
+        if (!existingEvent) {
+          await db.event.create({
+            data: {
+              title: eventTitle,
+              description: `${level.charAt(0).toUpperCase() + level.slice(1)}-level ${def?.provider === "adobe-commerce" ? "Adobe Commerce " : ""}certification exam.`,
+              eventDate: new Date(cert.examDate + "T00:00:00"),
+              category: "certification",
+            },
+          });
+        }
       }
     }
   }

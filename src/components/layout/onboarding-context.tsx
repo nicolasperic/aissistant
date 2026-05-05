@@ -9,6 +9,7 @@ interface OnboardingContextValue {
   isLoaded: boolean;
   markSeen: (steps: string[]) => Promise<void>;
   resetTour: () => Promise<void>;
+  completeOnboarding: () => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextValue>({
@@ -17,6 +18,7 @@ const OnboardingContext = createContext<OnboardingContextValue>({
   isLoaded: false,
   markSeen: async () => {},
   resetTour: async () => {},
+  completeOnboarding: () => {},
 });
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
@@ -65,8 +67,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     });
   }, []);
 
+  const completeOnboarding = useCallback(() => {
+    setOnboardingCompleted(true);
+  }, []);
+
   return (
-    <OnboardingContext.Provider value={{ completedSteps, onboardingCompleted, isLoaded, markSeen, resetTour }}>
+    <OnboardingContext.Provider value={{ completedSteps, onboardingCompleted, isLoaded, markSeen, resetTour, completeOnboarding }}>
       {children}
     </OnboardingContext.Provider>
   );
