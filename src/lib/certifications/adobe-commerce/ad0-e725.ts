@@ -93,6 +93,48 @@ export const ad0e725: CertDefinition = {
     timeLimitMinutes: 100,
   },
   active: true,
+  planningNotes: `Help me prepare a study plan for the Adobe Commerce Developer Expert (AD0-E725) certification.
+
+**Study plan guidelines:**
+- Plan the weeks from start to end date (each week as a weekly goal with daily tasks)
+- Each day with tasks assigned (max 120 min/day, typical 60–90 min)
+- Cover all exam sections proportionally to their weight
+- Include practice test days (take test + review errors + retake)
+- Include hands-on practice with Adobe Commerce CE/EE (latest version 2.4.8-p3)
+- Task descriptions should use markdown with bullet points, not paragraphs
+- Ramp up intensity as the exam date approaches
+- Include lighter review days and at least 1 rest day per week
+- Mind including tricky concepts that could confuse even experienced developers
+
+**Exam objectives and scope:**
+
+Section 1: Architecture (38%)
+- Demonstrate how to effectively use cache in Adobe Commerce
+- Demonstrate knowledge of components (plugin, preference, observers etc.)
+- Determine the effects and constraints of configuring multiple sites on a single instance
+- Explain the use cases for Git patches and the file level modifications in Composer
+- Explain Adobe Commerce security features (CSP, escaping, form keys, sanitization, reCAPTCHA, input validation)
+- Explain how the CRON scheduling system works
+- Explain index functionality
+
+Section 2: External Integrations (14%)
+- Customize the data flow in and out of SaaS services
+- Utilize App Builder
+- Utilize Adobe I/O events and Webhooks
+
+Section 3: Customizations (32%)
+- Customize the catalog
+- Customize check out and sales operations
+- Manipulate entity types programmatically
+- Customize the admin panel
+- Customize APIs
+- Demonstrate the ability to leverage existing message queues and create new queues
+- Demonstrate how to write an integration test
+
+Section 4: Cloud (16%)
+- Explain Adobe Commerce Cloud architecture
+- Setup and configure Adobe Commerce Cloud
+- Utilize Adobe Commerce Cloud CLI tool`,
   studyResources: {
     officialGuide:
       "https://experienceleague.adobe.com/docs/certification/certification/technical-certifications/ac/ac-expert/ac-e-developer.html",

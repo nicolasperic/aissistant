@@ -26,6 +26,8 @@ export interface CertDefinition {
   };
   /** Whether this cert is currently active (not retired) */
   active: boolean;
+  /** Pre-built planning notes template for AI study plan generation */
+  planningNotes: string;
   studyResources?: {
     officialGuide?: string;
     practiceExam?: string;

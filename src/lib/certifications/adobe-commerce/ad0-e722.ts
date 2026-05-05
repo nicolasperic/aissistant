@@ -86,6 +86,41 @@ export const ad0e722: CertDefinition = {
     timeLimitMinutes: 110,
   },
   active: true,
+  planningNotes: `Help me prepare a study plan for the Adobe Commerce Architect Master (AD0-E722) certification.
+
+**Study plan guidelines:**
+- Plan the weeks from start to end date (each week as a weekly goal with daily tasks)
+- Each day with tasks assigned (max 120 min/day, typical 60–90 min)
+- Cover all exam sections proportionally to their weight
+- Include practice test days (take test + review errors + retake)
+- Include hands-on practice with Adobe Commerce CE/EE (latest version 2.4.8-p3)
+- Task descriptions should use markdown with bullet points, not paragraphs
+- Ramp up intensity as the exam date approaches
+- Include lighter review days and at least 1 rest day per week
+- Focus on architectural judgment and decision-making, not syntax memorization
+- Include scenario-based exercises that test design trade-offs
+
+**Exam objectives and scope:**
+
+Section 1: Design (46%)
+- Design and implement optimal solutions for Adobe Commerce to meet business needs
+- Design logical and technical flows
+- Customize Commerce features
+- Integrate Adobe Commerce with external systems and services
+- Troubleshoot design flows
+
+Section 2: Review (32%)
+- Review and refactor existing Adobe Commerce customizations
+- Utilize Commerce test frameworks throughout the whole workflow
+- Optimize performance and scalability for Adobe Commerce
+- Troubleshoot to identify the root cause of issues with Adobe Commerce
+- Enforce coding standards
+
+Section 3: Configure and Deploy (22%)
+- Configure Adobe Commerce and make sure the project is set up optimally
+- Configure all aspects of Adobe Commerce Cloud
+- Oversee and improve deployment process
+- Troubleshoot infrastructure and configuration issues`,
   studyResources: {
     officialGuide:
       "https://experienceleague.adobe.com/docs/certification/certification/technical-certifications/ac/ac-master/ac-m-architect.html",

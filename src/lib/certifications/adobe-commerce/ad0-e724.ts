@@ -88,6 +88,44 @@ export const ad0e724: CertDefinition = {
     timeLimitMinutes: 120,
   },
   active: true,
+  planningNotes: `Help me prepare a study plan for the Adobe Commerce Developer Professional (AD0-E724) certification.
+
+**Study plan guidelines:**
+- Plan the weeks from start to end date (each week as a weekly goal with daily tasks)
+- Each day with tasks assigned (max 120 min/day, typical 60–90 min)
+- Cover all exam sections proportionally to their weight
+- Include practice test days (take test + review errors + retake)
+- Include hands-on practice with Adobe Commerce CE/EE (latest version 2.4.8-p3)
+- Task descriptions should use markdown with bullet points, not paragraphs
+- Ramp up intensity as the exam date approaches
+- Include lighter review days and at least 1 rest day per week
+
+**Exam objectives and scope:**
+
+Section 1: Architecture (52%)
+- Describe module file structure
+- Describe Adobe Commerce CLI commands
+- Describe CRON functionality
+- Describe index functionality
+- Describe localization
+- Explain components (plugin, preference, observers etc.)
+- Describe URL rewrites
+- Describe the Magento caching system
+- Describe stores, websites, and store views
+- Recall the code architecture of admin panel
+- Describe attributes and attribute sets
+
+Section 2: Customizations (36%)
+- Demonstrate knowledge of how to operate the catalog
+- Explain check out and sales operations
+- Manipulate entity types programmatically
+- Identify the data flow in and out of Adobe SaaS services
+- Identify API features
+
+Section 3: Cloud (12%)
+- Describe Adobe Commerce Cloud architecture
+- Describe the setup and configuration of Adobe Commerce Cloud
+- Recall the Adobe Commerce Cloud CLI tool`,
   studyResources: {
     officialGuide:
       "https://experienceleague.adobe.com/docs/certification/certification/technical-certifications/ac/ac-professional/ac-p-developer.html",

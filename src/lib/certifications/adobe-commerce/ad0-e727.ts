@@ -64,6 +64,52 @@ export const ad0e727: CertDefinition = {
     timeLimitMinutes: 100,
   },
   active: true,
+  planningNotes: `Help me prepare a study plan for the Adobe Commerce Front-End Developer Expert (AD0-E727) certification.
+
+**Study plan guidelines:**
+- Plan the weeks from start to end date (each week as a weekly goal with daily tasks)
+- Each day with tasks assigned (max 120 min/day, typical 60–90 min)
+- Cover all exam sections proportionally to their weight
+- Include practice test days (take test + review errors + retake)
+- Include hands-on practice with Adobe Commerce CE/EE (latest version 2.4.8-p3)
+- Task descriptions should use markdown with bullet points, not paragraphs
+- Ramp up intensity as the exam date approaches
+- Include lighter review days and at least 1 rest day per week
+
+**Exam objectives and scope:**
+
+Section 1: Theme management (10%)
+- Demonstrate the ability to create a new theme
+- Demonstrate ability to extend existing themes
+- Demonstrate ability to customize transactional emails
+- Demonstrate ability to apply translations, XML, and JS files
+
+Section 2: Layout XML & templates (22%)
+- Demonstrate the ability to utilize layout XML instructions
+- Demonstrate the ability to create new page layouts
+- Understand the difference between extending/merging and overriding XML
+- Demonstrate ability to create and customize phtml templates
+- Apply template security (escaping output)
+
+Section 3: Styles (12%)
+- Explain the purpose of different LESS files (compiled and partial)
+- Demonstrate the ability to work with LESS files
+- Implement and customize LESS library components
+
+Section 4: JavaScript (36%)
+- Demonstrate the usage of RequireJS
+- Demonstrate the ability to implement different types of mixins
+- Demonstrate the usage of Knockout JS
+- Demonstrate the usage of jQuery widgets
+- Demonstrate the usage of JS components using Layout XML
+
+Section 5: Customizing the Admin panel, Page Builder, and optimizations (20%)
+- Demonstrate the ability to customize Page Builder content
+- Describe front-end optimization
+- Describe how to modify and extend the Commerce admin through the admin UI SDK
+- Define Grunt setup and usage
+- Utilize additional tools that Commerce Cloud provides
+- Describe steps to utilize Edge Delivery Service boiler plate`,
   studyResources: {
     officialGuide:
       "https://experienceleague.adobe.com/docs/certification/certification/technical-certifications/ac/ac-expert/ac-e-fedeveloper0623.html",
