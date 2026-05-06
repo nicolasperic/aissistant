@@ -49,6 +49,22 @@ export async function POST(req: NextRequest) {
         }),
       ]);
 
+    // For certification focus goals, fetch unlinked study notes
+    const certStudyNotes = new Map<string, { id: string; title: string; section: string | null; position: number }[]>();
+    for (const goal of focusGoals) {
+      if (goal.category !== "certification") continue;
+      const userCert = await db.userCertification.findFirst({ where: { goalId: goal.id } });
+      if (!userCert) continue;
+      const notes = await db.studyNote.findMany({
+        where: { certCode: userCert.certCode, taskId: null },
+        select: { id: true, title: true, section: true, position: true },
+        orderBy: { position: "asc" },
+      });
+      if (notes.length > 0) {
+        certStudyNotes.set(goal.id, notes);
+      }
+    }
+
     const planStartStr = planStart.toISOString().split("T")[0];
     const planEndStr = planEnd.toISOString().split("T")[0];
 
@@ -61,6 +77,7 @@ export async function POST(req: NextRequest) {
       rangeType,
       planStart: planStartStr,
       planEnd: planEndStr,
+      certStudyNotes,
     });
 
     const plan = await generateJsonCompletion<AiWeeklyPlan>(
@@ -108,6 +125,16 @@ export async function POST(req: NextRequest) {
         });
       })
     );
+
+    // Link tasks to study notes (atomic — only claims unlinked notes)
+    for (let i = 0; i < plan.tasks.length; i++) {
+      const studyNoteId = plan.tasks[i].studyNoteId;
+      if (!studyNoteId) continue;
+      await db.studyNote.updateMany({
+        where: { id: studyNoteId, taskId: null },
+        data: { taskId: createdTasks[i].id },
+      });
+    }
 
     // Save AI context
     await db.aiContext.create({

@@ -97,7 +97,8 @@
           "hint": "Ask: can my module work at all without the other module installed?",
           "topic": "Apr 11 — Architecture Overview + Module System"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 2 — Dependency Injection Deep Dive",
@@ -195,7 +196,8 @@
           "hint": "Before and after order are mirrors of each other due to how around plugins nest.",
           "topic": "Apr 12 — Dependency Injection Deep Dive"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 3 — Plugin System + Events vs Observers",
@@ -293,7 +295,8 @@
           "hint": "Scope determines which Magento area (request context) triggers the observer.",
           "topic": "Apr 13 — Plugin System + Events vs Observers"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 4 — Service Contracts, Repositories & Extension Attributes",
@@ -391,7 +394,8 @@
           "hint": "Consider what the REST layer needs to generate a predictable JSON schema.",
           "topic": "Apr 14 — Service Contracts, Repositories & Extension Attributes"
         }
-      ]
+      ],
+      "section": "Integration & APIs"
     },
     {
       "title": "Day 5 — REST & GraphQL API Design",
@@ -489,7 +493,8 @@
           "hint": "Think about how Magento's dependency injection handles interface-to-class binding.",
           "topic": "Apr 15 — REST & GraphQL API Design"
         }
-      ]
+      ],
+      "section": "Integration & APIs"
     },
     {
       "title": "Day 6 — Request Flow, Routing & External Integrations",
@@ -587,7 +592,8 @@
           "hint": "Consider all three types of configuration that are area-scoped in Magento.",
           "topic": "Apr 16 — Request Flow, Routing & External Integrations"
         }
-      ]
+      ],
+      "section": "Integration & APIs"
     },
     {
       "title": "Day 7 — Practice Test #1 + Gap Analysis",
@@ -679,7 +685,8 @@
           "hint": "There are exactly four exceptions — they're all infrastructure-level, not business logic.",
           "topic": "Apr 17 — Practice Test #1 + Gap Analysis"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 8 — UI Components, Layout XML & ViewModel Pattern",
@@ -777,7 +784,8 @@
           "hint": "One is for parent-child template calls; the other is globally unique across the whole page.",
           "topic": "Apr 18 — UI Components, Layout XML & ViewModel Pattern"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 9 — Advanced Customization Patterns",
@@ -875,7 +883,8 @@
           "hint": "Ask whether the fee needs to appear in the checkout totals block and react to cart changes.",
           "topic": "Apr 19 — Advanced Customization Patterns"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 10 — EAV, Declarative Schema & Data Patches",
@@ -973,7 +982,8 @@
           "hint": "One product can have many rows in EE — what column is unique per row?",
           "topic": "Apr 20 — EAV, Declarative Schema & Data Patches"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 11 — Staging & Preview (EE) + B2B Architecture",
@@ -1071,7 +1081,8 @@
           "hint": "Catalog visibility rules apply regardless of the input method used to enter the SKU.",
           "topic": "Apr 21 — Staging & Preview (EE) + B2B Architecture"
         }
-      ]
+      ],
+      "section": "B2B & Inventory"
     },
     {
       "title": "Day 12 — Search, Indexing & Caching Architecture",
@@ -1169,7 +1180,8 @@
           "hint": "Consider the scenario where a new product appears in category browsing but not in search results.",
           "topic": "Apr 22 — Search, Indexing & Caching Architecture"
         }
-      ]
+      ],
+      "section": "Performance & Caching"
     },
     {
       "title": "Day 13 — Code Standards, SOLID & Testing Frameworks",
@@ -1267,7 +1279,8 @@
           "hint": "One replaces all behavior; the other preserves real behavior except for named methods.",
           "topic": "Apr 23 — Code Standards, SOLID & Testing Frameworks"
         }
-      ]
+      ],
+      "section": "Testing & Quality"
     },
     {
       "title": "Day 14 — Performance Optimization + MSI Architecture",
@@ -1365,7 +1378,8 @@
           "hint": "The interface name literally describes what it returns — compare it to the legacy registry approach.",
           "topic": "Apr 25 — Performance Optimization + MSI Architecture"
         }
-      ]
+      ],
+      "section": "Performance & Caching"
     },
     {
       "title": "Day 15 — Scalability Patterns + Order Management Architecture",
@@ -1463,7 +1477,8 @@
           "hint": "Consider what cross-website visibility means for GDPR or multi-brand scenarios.",
           "topic": "Apr 26 — Scalability Patterns + Order Management Architecture"
         }
-      ]
+      ],
+      "section": "Performance & Caching"
     },
     {
       "title": "Day 16 — Security Architecture",
@@ -1561,7 +1576,8 @@
           "hint": "Think about who controls the content: admin vs. anonymous user.",
           "topic": "Apr 27 — Security Architecture"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 17 — Adobe Commerce Cloud Architecture",
@@ -1659,7 +1675,8 @@
           "hint": "The cluster architecture physically enforces the chain; governance reasons reinforce it.",
           "topic": "Apr 28 — Adobe Commerce Cloud Architecture"
         }
-      ]
+      ],
+      "section": "Cloud & Deployment"
     },
     {
       "title": "Day 18 — Deployment Pipeline, ECE-Tools & Quality Patches",
@@ -1757,7 +1774,8 @@
           "hint": "One creates config, one moves artifacts — think generate then transfer.",
           "topic": "Apr 29 — Deployment Pipeline, ECE-Tools & Quality Patches"
         }
-      ]
+      ],
+      "section": "Cloud & Deployment"
     },
     {
       "title": "Day 19 — Configuration Management + Troubleshooting",
@@ -1855,7 +1873,8 @@
           "hint": "This follows the Dependency Inversion Principle — depend on abstractions, not concretions.",
           "topic": "Apr 30 — Configuration Management + Troubleshooting"
         }
-      ]
+      ],
+      "section": "Cloud & Deployment"
     },
     {
       "title": "Day 22 — Weak Section Deep Dive + Integration Patterns",
@@ -1953,7 +1972,8 @@
           "hint": "One mode blocks the admin save while reindexing everything; the other records changes to a changelog and processes them asynchronously via cron.",
           "topic": "Performance Architecture"
         }
-      ]
+      ],
+      "section": "Integration & APIs"
     },
     {
       "title": "Day 23 — Architecture Decision Records + Catalog Pricing Deep Dive",
@@ -2051,7 +2071,8 @@
           "hint": "Four things break: visibility, testability, interceptability, and compile-time optimization. Only auto-generated framework classes are exempt.",
           "topic": "Anti-Patterns"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 24 — EE vs CE Feature Matrix + Architect Scenarios Drill",
@@ -2143,7 +2164,8 @@
           "hint": "It's HTML with special data attributes in the same field that normally holds CMS content — not a separate structured format.",
           "topic": "Page Builder"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 25 — Practice Test #5 + Final Cheat Sheet",
@@ -2241,7 +2263,8 @@
           "hint": "Consider what happens when two third-party modules both need to modify the same class.",
           "topic": "Architecture"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     },
     {
       "title": "Day 26 — Exam Eve: Light Review",
@@ -2339,7 +2362,8 @@
           "hint": "The commands follow the append-only philosophy — they add entries rather than remove them.",
           "topic": "Architecture"
         }
-      ]
+      ],
+      "section": "Architecture & Design"
     }
   ]
 }

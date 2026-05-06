@@ -108,13 +108,14 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/certento"
 ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
-Set up the database and seed sample data:
+Set up the database and seed study content:
 
 ```bash
-npx prisma db push
-npx prisma generate
+npx prisma migrate dev
 npm run seed
 ```
+
+This runs all migrations and seeds the database with **147 study notes**, **2,099 flashcards**, and **practice exam questions** across 7 Adobe Commerce certifications. No demo goals or tasks are created — the setup wizard handles that.
 
 Run the dev server:
 
@@ -122,7 +123,7 @@ Run the dev server:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The setup wizard will guide you through picking your certifications.
+Open [http://localhost:3000](http://localhost:3000). The setup wizard will guide you through picking your certifications, setting exam dates, and creating your initial goals.
 
 ---
 
@@ -176,7 +177,7 @@ src/
     types.ts               # Shared TypeScript types
 prisma/
   schema.prisma            # Database schema
-  seed.ts                  # Sample data seeder
+  seed.ts                  # Content pack & practice test seeder
 ```
 
 ### AI Integration

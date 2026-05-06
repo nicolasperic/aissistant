@@ -97,7 +97,8 @@
           "hint": "These two files must agree on the module's identity for Magento to properly register it.",
           "topic": "Module Registration"
         }
-      ]
+      ],
+      "section": "Architecture"
     },
     {
       "title": "Day 2 — CLI Commands & Setup Scripts",
@@ -195,7 +196,8 @@
           "hint": "The scope of the flush operation extends beyond Magento to the entire cache backend.",
           "topic": "Cache Management"
         }
-      ]
+      ],
+      "section": "Architecture"
     },
     {
       "title": "Day 3 — Cron Configuration & Cron Groups",
@@ -293,7 +295,8 @@
           "hint": "These commands automate what you would otherwise do manually by editing crontab -e.",
           "topic": "Cron CLI"
         }
-      ]
+      ],
+      "section": "Customizing Business Logic"
     },
     {
       "title": "Day 4 — Indexing System",
@@ -391,7 +394,8 @@
           "hint": "MSI adds the concept of multiple physical locations aggregated into virtual stocks.",
           "topic": "Inventory Indexer"
         }
-      ]
+      ],
+      "section": "Customizing Business Logic"
     },
     {
       "title": "Day 5 — Localization & Translation System",
@@ -489,7 +493,8 @@
           "hint": "A specific cache type dedicated to translations must be flushed for changes to appear.",
           "topic": "Translation Cache"
         }
-      ]
+      ],
+      "section": "Working with Admin"
     },
     {
       "title": "Day 6 — Dependency Injection Fundamentals",
@@ -587,7 +592,8 @@
           "hint": "A no-method interface that acts as a 'do not intercept' flag for the code generation system.",
           "topic": "Interception Framework"
         }
-      ]
+      ],
+      "section": "Architecture"
     },
     {
       "title": "Day 7 — Plugins & Observers (Components)",
@@ -685,7 +691,8 @@
           "hint": "Despite common misconception, these are regular public methods fully eligible for plugin interception.",
           "topic": "Plugin Misconceptions"
         }
-      ]
+      ],
+      "section": "Architecture"
     },
     {
       "title": "Day 8 — Caching System",
@@ -783,7 +790,8 @@
           "hint": "Think of it as caching the 'blueprint' of the database, not the contents.",
           "topic": "Cache Types"
         }
-      ]
+      ],
+      "section": "Architecture"
     },
     {
       "title": "Day 9 — Stores, Websites & Store Views",
@@ -881,7 +889,8 @@
           "hint": "The foundational money denomination is set at the middle tier of the hierarchy, not the most granular one.",
           "topic": "Store Hierarchy"
         }
-      ]
+      ],
+      "section": "Working with Admin"
     },
     {
       "title": "Day 10 — URL Rewrites & Admin Panel Architecture",
@@ -979,7 +988,8 @@
           "hint": "Each URL segment corresponds to a directory level under the admin controller namespace, with the final segment being the class name.",
           "topic": "Admin Routing"
         }
-      ]
+      ],
+      "section": "Working with Admin"
     },
     {
       "title": "Day 11 — Attributes & Attribute Sets",
@@ -1077,7 +1087,8 @@
           "hint": "One table has the universal attribute definition, the other adds catalog-specific behavioral flags via a foreign key join.",
           "topic": "EAV Database Schema"
         }
-      ]
+      ],
+      "section": "EAV & Extensions"
     },
     {
       "title": "Day 12 — Service Contracts & Repository Pattern",
@@ -1175,7 +1186,8 @@
           "hint": "A simple in-memory array prevents the same database row from being loaded twice in one PHP request.",
           "topic": "Repository Pattern"
         }
-      ]
+      ],
+      "section": "EAV & Extensions"
     },
     {
       "title": "Day 13 — Catalog Operations",
@@ -1273,7 +1285,8 @@
           "hint": "One creates separate cart entries with independent prices; the other presents a unified product with variant selection.",
           "topic": "Product Types"
         }
-      ]
+      ],
+      "section": "Catalog"
     },
     {
       "title": "Day 14 — Checkout & Sales Operations",
@@ -1371,7 +1384,8 @@
           "hint": "One loads any quote unconditionally; the other enforces the active-state requirement and rejects inactive quotes.",
           "topic": "Cart Operations"
         }
-      ]
+      ],
+      "section": "Sales"
     },
     {
       "title": "Day 15 — Programmatic Entity Manipulation",
@@ -1469,7 +1483,8 @@
           "hint": "The distinction is whether you make separate calls or combine conditions in a single call.",
           "topic": "Collection Filtering"
         }
-      ]
+      ],
+      "section": "EAV & Extensions"
     },
     {
       "title": "Day 16 — SaaS Data Flow & Integrations",
@@ -1543,7 +1558,8 @@
           "hint": "Machine learning models need enough data samples before they can make useful predictions.",
           "topic": "Product Recommendations"
         }
-      ]
+      ],
+      "section": "Customizing Business Logic"
     },
     {
       "title": "Day 17 — REST & GraphQL API Features",
@@ -1623,7 +1639,8 @@
           "hint": "A specific HTTP header must be sent to change from the default format.",
           "topic": "REST API"
         }
-      ]
+      ],
+      "section": "Customizing Business Logic"
     },
     {
       "title": "Day 18 — Testing Frameworks",
@@ -1703,7 +1720,8 @@
           "hint": "Each API type has its own abstract test class and helper method for making requests.",
           "topic": "API Testing"
         }
-      ]
+      ],
+      "section": "Customizing Business Logic"
     },
     {
       "title": "Day 19 — Cloud Architecture Overview",
@@ -1771,7 +1789,8 @@
           "hint": "User-generated content needs cross-node visibility, but deterministic build output does not.",
           "topic": "Cloud Architecture"
         }
-      ]
+      ],
+      "section": "Architecture"
     },
     {
       "title": "Day 20 — Cloud Setup & Configuration Files",
@@ -1851,7 +1870,8 @@
           "hint": "Once created, the value becomes unreadable -- it can only be replaced or removed.",
           "topic": "Cloud Variables"
         }
-      ]
+      ],
+      "section": "Architecture"
     }
   ]
 }

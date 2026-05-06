@@ -28,6 +28,7 @@ interface StudyNoteData {
   title: string;
   content: string;
   certCode: string;
+  section?: string;
   position: number;
   flashcards: FlashcardData[];
 }
@@ -87,6 +88,7 @@ async function main() {
           title: noteData.title,
           content: noteData.content,
           certCode: noteData.certCode,
+          section: noteData.section ?? null,
           position: noteData.position,
           validated: true,
         },

@@ -73,6 +73,7 @@ model StudyNote {
   title            String
   content          String
   certCode         String?
+  section          String?
   taskId           String?     @unique
   task             Task?       @relation(fields: [taskId], references: [id], onDelete: SetNull)
   goalId           String?

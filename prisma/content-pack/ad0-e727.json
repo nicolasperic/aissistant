@@ -85,7 +85,8 @@
           "hint": null,
           "topic": "Theme Management"
         }
-      ]
+      ],
+      "section": "Theme Design & Customization"
     },
     {
       "title": "Day 2 — Extending Existing Themes & Theme Inheritance",
@@ -165,7 +166,8 @@
           "hint": null,
           "topic": "Theme Inheritance & Extension"
         }
-      ]
+      ],
+      "section": "Theme Design & Customization"
     },
     {
       "title": "Day 3 — Transactional Emails & Translations",
@@ -257,7 +259,8 @@
           "hint": null,
           "topic": "Transactional Emails & Translations"
         }
-      ]
+      ],
+      "section": "Theme Design & Customization"
     },
     {
       "title": "Day 4 — Layout XML Instructions & Page Layouts",
@@ -343,7 +346,8 @@
           "hint": null,
           "topic": "Layout XML Instructions"
         }
-      ]
+      ],
+      "section": "Layouts, Blocks & Templates"
     },
     {
       "title": "Day 5 — Extending vs Merging vs Overriding Layout XML",
@@ -411,7 +415,8 @@
           "hint": null,
           "topic": "Extending vs Overriding Layout XML"
         }
-      ]
+      ],
+      "section": "Layouts, Blocks & Templates"
     },
     {
       "title": "Day 6 — PHTML Templates & Template Security",
@@ -485,7 +490,8 @@
           "hint": null,
           "topic": "PHTML Templates & Security"
         }
-      ]
+      ],
+      "section": "Layouts, Blocks & Templates"
     },
     {
       "title": "Day 7 — Week 1 Review + First Practice Test",
@@ -583,7 +589,8 @@
           "hint": "There are three theme levels before falling back to the module's own view files.",
           "topic": "Theme Inheritance"
         }
-      ]
+      ],
+      "section": "Theme Design & Customization"
     },
     {
       "title": "Day 8 — LESS Architecture: Compiled vs Partial Files",
@@ -681,7 +688,8 @@
           "hint": "It serves as the final fallback when neither the current theme nor parent themes provide a file.",
           "topic": "LESS Architecture"
         }
-      ]
+      ],
+      "section": "Theme Design & Customization"
     },
     {
       "title": "Day 9 — Working with LESS & UI Library Components",
@@ -773,7 +781,8 @@
           "hint": "Follow the import order — the last file to declare a variable wins.",
           "topic": "UI Library"
         }
-      ]
+      ],
+      "section": "Theme Design & Customization"
     },
     {
       "title": "Day 10 — RequireJS: Configuration & Usage",
@@ -871,7 +880,8 @@
           "hint": "These are the framework-provided aliases that every Commerce module can use without additional configuration.",
           "topic": "RequireJS"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 11 — JavaScript Mixins (All Types)",
@@ -975,7 +985,8 @@
           "hint": "The function must provide the modified component back to the system — check what value the inner function actually returns.",
           "topic": "JavaScript Mixins"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 12 — Knockout JS in Adobe Commerce",
@@ -1073,7 +1084,8 @@
           "hint": "Knockout and Magento's uiRegistry both expose inspection methods accessible from the browser console.",
           "topic": "Debugging KO"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 13 — Practice Test Review & Weak Area Deep Dive",
@@ -1171,7 +1183,8 @@
           "hint": "The override directory uses underscore-separated module naming, and the relative path after templates/ must match exactly.",
           "topic": "Theme Overrides"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 14 — Week 2 Review + Second Practice Test",
@@ -1269,7 +1282,8 @@
           "hint": "The factory uses a namespace.name format, and lifecycle methods follow an underscore-prefix convention for visibility.",
           "topic": "jQuery Widgets"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 15 — jQuery Widgets in Adobe Commerce",
@@ -1367,7 +1381,8 @@
           "hint": "The event name is automatically prefixed with the lowercase widget name, creating a combined identifier.",
           "topic": "jQuery Widgets"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 16 — JS Components via Layout XML",
@@ -1465,7 +1480,8 @@
           "hint": "The double-colon notation maps a module name to its web directory, similar to how template paths work in blocks.",
           "topic": "Layout XML"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 17 — Page Builder Customization & Admin UI SDK",
@@ -1557,7 +1573,8 @@
           "hint": "It lives in the adminhtml web directory and extends a base class specific to Page Builder's preview functionality.",
           "topic": "Page Builder"
         }
-      ]
+      ],
+      "section": "Checkout & Cart Customization"
     },
     {
       "title": "Day 18 — Grunt, Front-End Optimization & Edge Delivery",
@@ -1655,7 +1672,8 @@
           "hint": "Think of it as the bridge between the code repository and the content authoring platform.",
           "topic": "Edge Delivery Services"
         }
-      ]
+      ],
+      "section": "Checkout & Cart Customization"
     },
     {
       "title": "Day 19 — Full Exam Section Review & Cheat Sheet Finalization",
@@ -1753,7 +1771,8 @@
           "hint": "This is an entirely separate content and delivery system that coexists with, but does not integrate into, the traditional Magento theme layer.",
           "topic": "Edge Delivery Services"
         }
-      ]
+      ],
+      "section": "Checkout & Cart Customization"
     },
     {
       "title": "Day 20 — Final Practice Test + Light Exam Eve Prep",
@@ -1851,7 +1870,8 @@
           "hint": "Scope flows from general to specific, and the display attributes are about visibility in the admin UI, not about override permissions.",
           "topic": "Configuration"
         }
-      ]
+      ],
+      "section": "Checkout & Cart Customization"
     }
   ]
 }

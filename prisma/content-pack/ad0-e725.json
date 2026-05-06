@@ -97,7 +97,8 @@
           "hint": "It is related to dependency injection, not regular cache flushing.",
           "topic": "Cache Architecture"
         }
-      ]
+      ],
+      "section": "Performance & Security"
     },
     {
       "title": "Day 2 — Components: Plugins, Preferences, Observers",
@@ -195,7 +196,8 @@
           "hint": "You reference the plugin by its unique name attribute.",
           "topic": "Plugins"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     },
     {
       "title": "Day 3 — Multi-site / Multi-store Architecture",
@@ -287,7 +289,8 @@
           "hint": "One cache entry holds everything, regardless of how many websites exist.",
           "topic": "Multi-store Architecture"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     },
     {
       "title": "Day 4 — Git Patches & Composer File-level Modifications",
@@ -379,7 +382,8 @@
           "hint": "The newer prefix reflects the Adobe Commerce branding.",
           "topic": "Quality Patches"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     },
     {
       "title": "Day 5 — Adobe Commerce Security Features",
@@ -471,7 +475,8 @@
           "hint": "Each area has its own configuration path for the mode setting.",
           "topic": "Security - CSP"
         }
-      ]
+      ],
+      "section": "Performance & Security"
     },
     {
       "title": "Day 6 — CRON Scheduling System",
@@ -563,7 +568,8 @@
           "hint": "The process terminated but the database row was never updated.",
           "topic": "CRON System"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     },
     {
       "title": "Day 7 — Indexing System + Week 1 Review",
@@ -661,7 +667,8 @@
           "hint": "It ensures prerequisite indexers finish before dependent ones start.",
           "topic": "Indexing System"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     },
     {
       "title": "Day 8 — Catalog Customization",
@@ -759,7 +766,8 @@
           "hint": "The attribute flag name describes where it will be used — in product listing contexts.",
           "topic": "Flat Catalog"
         }
-      ]
+      ],
+      "section": "Catalog & Sales"
     },
     {
       "title": "Day 9 — Checkout & Sales Customization",
@@ -857,7 +865,8 @@
           "hint": "Think of the three pairs: 'by' applies a discount amount, 'to' sets a target price, plus two special types for cart-wide and promotional.",
           "topic": "Sales Rules"
         }
-      ]
+      ],
+      "section": "Catalog & Sales"
     },
     {
       "title": "Day 10 — Entity Types: Programmatic Manipulation",
@@ -949,7 +958,8 @@
           "hint": "One namespace is for operations, the other is for the data structures those operations work with.",
           "topic": "Service Contracts"
         }
-      ]
+      ],
+      "section": "Database & EAV"
     },
     {
       "title": "Day 11 — Admin Panel Customization",
@@ -1041,7 +1051,8 @@
           "hint": "Think of it as a variable placeholder that gets filled with the actual provider name when the component initializes.",
           "topic": "JS UI Components"
         }
-      ]
+      ],
+      "section": "Admin Customization"
     },
     {
       "title": "Day 12 — API Customization (REST + GraphQL)",
@@ -1133,7 +1144,8 @@
           "hint": "The async prefix in the URL puts items on a queue, but something needs to take them off and process them.",
           "topic": "Async APIs"
         }
-      ]
+      ],
+      "section": "API & Integration"
     },
     {
       "title": "Day 13 — Message Queues",
@@ -1225,7 +1237,8 @@
           "hint": "A named channel and the data to send through it — the data type must match what was declared in configuration.",
           "topic": "Queue Publisher"
         }
-      ]
+      ],
+      "section": "API & Integration"
     },
     {
       "title": "Day 14 — Integration Tests + Week 2 Review",
@@ -1317,7 +1330,8 @@
           "hint": "Browser-driven acceptance tests need a full running application stack including a web server and browser automation.",
           "topic": "MFTF (Week 2 Review)"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     },
     {
       "title": "Day 15 — External Integrations: SaaS Services & Data Flow",
@@ -1421,7 +1435,8 @@
           "hint": "The method name suggests it retrieves changes since a point in time.",
           "topic": "SaaS Feed Architecture"
         }
-      ]
+      ],
+      "section": "API & Integration"
     },
     {
       "title": "Day 16 — App Builder",
@@ -1501,7 +1516,8 @@
           "hint": "Each extension point corresponds to a different area of the Admin interface.",
           "topic": "Admin UI SDK Extension Points"
         }
-      ]
+      ],
+      "section": "API & Integration"
     },
     {
       "title": "Day 17 — Adobe I/O Events & Webhooks",
@@ -1581,7 +1597,8 @@
           "hint": "This is a testing tool that shortcuts the event pipeline.",
           "topic": "I/O Events Testing"
         }
-      ]
+      ],
+      "section": "API & Integration"
     },
     {
       "title": "Day 18 — Adobe Commerce Cloud Architecture",
@@ -1667,7 +1684,8 @@
           "hint": "It's the automation package that translates a git push into a working deployment.",
           "topic": "ECE-Tools"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     },
     {
       "title": "Day 19 — Cloud Setup, Configuration & CLI",
@@ -1747,7 +1765,8 @@
           "hint": "The command opens tunnels to all services at once, not just one.",
           "topic": "Cloud CLI"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     },
     {
       "title": "Day 20 — Full Practice Exam Day",
@@ -1821,7 +1840,8 @@
           "hint": "It follows the separation of concerns principle — templates render, ViewModels prepare data.",
           "topic": "ViewModels"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     },
     {
       "title": "Day 21 — Light Review + Exam Prep (Day before exam)",
@@ -1895,7 +1915,8 @@
           "hint": "The URL path contains both 'async' and 'bulk' prefixes before the standard V1 path.",
           "topic": "Async REST API"
         }
-      ]
+      ],
+      "section": "Architecture & Customization"
     }
   ]
 }

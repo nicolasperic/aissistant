@@ -480,7 +480,7 @@ function SummaryStep({
 
       <div className="rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground">
         <p>
-          After setup, head to <strong>Goals</strong> to create your study plan, or use the <strong>Weekly Planner</strong> to let AI generate daily study tasks for you.
+          After setup, head to <strong>Weekly Plan</strong> to let AI generate your study plan with daily study tasks for a specific certification goal.
         </p>
       </div>
     </div>

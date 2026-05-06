@@ -28,6 +28,7 @@ export type WeeklyPlanTask = {
   estimatedMinutes?: number;
   weekKey?: string;  // references WeeklyGoalDraft.weekKey
   goalId?: string;   // fallback direct goal ID
+  studyNoteId?: string; // links task to an existing study note
 };
 
 export type AiWeeklyPlan = {

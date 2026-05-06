@@ -97,7 +97,8 @@
           "hint": "This determines whether product prices are shared across all websites or can vary.",
           "topic": "Catalog Configuration"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 2 — Import/Export & Admin Configuration",
@@ -195,7 +196,8 @@
           "hint": "One changes per language/view, the other stays consistent within a website.",
           "topic": "Admin Configuration"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 3 — Cart, Checkout & Payment Methods",
@@ -287,7 +289,8 @@
           "hint": "There's a time limit on how long funds can be held without capturing.",
           "topic": "Payment Actions"
         }
-      ]
+      ],
+      "section": "Order Management & Fulfillment"
     },
     {
       "title": "Day 4 — Shipping Methods & Carriers",
@@ -379,7 +382,8 @@
           "hint": "Only one carrier is pre-activated in a fresh installation.",
           "topic": "Flat Rate Shipping"
         }
-      ]
+      ],
+      "section": "Order Management & Fulfillment"
     },
     {
       "title": "Day 5 — Transactional Emails & Customer Communications",
@@ -471,7 +475,8 @@
           "hint": "Guest orders need slightly different template handling since there's no customer account.",
           "topic": "Email Templates"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 6 — Order Lifecycle & Returns",
@@ -563,7 +568,8 @@
           "hint": "One happens after delivery, the other before.",
           "topic": "Order States"
         }
-      ]
+      ],
+      "section": "Order Management & Fulfillment"
     },
     {
       "title": "Day 7 — Practice Test #1 + Week 1 Gap Analysis",
@@ -655,7 +661,8 @@
           "hint": "The stock misconception about parent vs. child is the most common trap.",
           "topic": "Exam Strategy"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 9 — Gifting Options & B2B Loyalty/Self-Service",
@@ -753,7 +760,8 @@
           "hint": "Points earned at different times expire independently.",
           "topic": "Reward Points"
         }
-      ]
+      ],
+      "section": "B2B & Advanced Features"
     },
     {
       "title": "Day 11 — Categories, Visual Merchandising & Search",
@@ -851,7 +859,8 @@
           "hint": "A previously available option was completely removed in version 2.4.",
           "topic": "Search"
         }
-      ]
+      ],
+      "section": "Merchandising & Content"
     },
     {
       "title": "Day 12 — SEO & Digital Marketing Features",
@@ -949,7 +958,8 @@
           "hint": "URL parameters from filtering can multiply the number of indexable pages.",
           "topic": "SEO"
         }
-      ]
+      ],
+      "section": "Merchandising & Content"
     },
     {
       "title": "Day 13 — Adobe Commerce EE vs Open Source & Add-on Services",
@@ -1047,7 +1057,8 @@
           "hint": "Several EE features have admin locations that differ from what many study guides suggest.",
           "topic": "EE vs Open Source"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 14 — Practice Test #2 + Review",
@@ -1145,7 +1156,8 @@
           "hint": "It is under the Design area, within a specific fieldset that is easy to overlook.",
           "topic": "SEO Review"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 15 — B2B: Company & Shared Catalog",
@@ -1243,7 +1255,8 @@
           "hint": "There are two equally valid admin paths to achieve the same assignment.",
           "topic": "B2B Shared Catalogs"
         }
-      ]
+      ],
+      "section": "B2B & Advanced Features"
     },
     {
       "title": "Day 16 — B2B: Negotiable Quotes, Requisition Lists & Quick Order",
@@ -1341,7 +1354,8 @@
           "hint": "The agreed-upon prices are preserved as-is in the order.",
           "topic": "Negotiable Quote Pricing"
         }
-      ]
+      ],
+      "section": "B2B & Advanced Features"
     },
     {
       "title": "Day 17 — MSI: Multi-Source Inventory",
@@ -1439,7 +1453,8 @@
           "hint": "Five checks covering composite products, source status, backorders, stock management, and reservation-adjusted quantity.",
           "topic": "MSI Salability"
         }
-      ]
+      ],
+      "section": "B2B & Advanced Features"
     },
     {
       "title": "Day 18 — BI, LiveSearch & Product Recommendations",
@@ -1537,7 +1552,8 @@
           "hint": "One type is merchant-controlled; the other is AI-driven based on context.",
           "topic": "LiveSearch Facets"
         }
-      ]
+      ],
+      "section": "Reporting & Business Intelligence"
     },
     {
       "title": "Day 19 — Taxes, Duties & B2B Tax Configuration",
@@ -1635,7 +1651,8 @@
           "hint": "Same priority = sum; different priority = sequential application with optional compounding.",
           "topic": "Tax Rules"
         }
-      ]
+      ],
+      "section": "Order Management & Fulfillment"
     },
     {
       "title": "Day 20 — Tailored Pricing & Sensei Recommendations Deep Dive",
@@ -1733,7 +1750,8 @@
           "hint": "No views at all points to a display problem, not a data problem.",
           "topic": "Product Recommendations Troubleshooting"
         }
-      ]
+      ],
+      "section": "Merchandising & Content"
     },
     {
       "title": "Day 21 — Practice Test #3 + Add-on Modules Review",
@@ -1831,7 +1849,8 @@
           "hint": "One diagnoses; the other fixes — both deal with reservation balance problems.",
           "topic": "MSI Troubleshooting"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 22 — Compliance: Roles, Permissions & Security",
@@ -1929,7 +1948,8 @@
           "hint": "It is the built-in GDPR cookie consent mechanism.",
           "topic": "GDPR Compliance"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 23 — Systems Architecture: Websites, Stores & Integrations",
@@ -2015,7 +2035,8 @@
           "hint": "This is a configuration that requires background processing to take effect after change.",
           "topic": "Configuration Scope"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 24 — Full Exam Simulation #4",
@@ -2107,7 +2128,8 @@
           "hint": "Tags allow precise targeting rather than clearing entire URL patterns.",
           "topic": "Cache Management"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 25 — Weak Area Deep Dive #1",
@@ -2199,7 +2221,8 @@
           "hint": "The SaaS service handles what customers type in the search bar, but the on-premise engine still handles other catalog functions.",
           "topic": "Search"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 26 — Weak Area Deep Dive #2 + Scenario Drill",
@@ -2291,7 +2314,8 @@
           "hint": "It is a stop-processing flag that prevents further discounts from stacking.",
           "topic": "Promotions"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 27 — Practice Test #5 + Final Cheat Sheet",
@@ -2377,7 +2401,8 @@
           "hint": "The lifecycle covers the full negotiation loop from draft to final outcome.",
           "topic": "B2B Quotes"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     },
     {
       "title": "Day 28 — Exam Eve: Light Review",
@@ -2469,7 +2494,8 @@
           "hint": "One is a gate (blocks access); the other is a lens (personalizes experience).",
           "topic": "Content Visibility"
         }
-      ]
+      ],
+      "section": "Core Commerce Features"
     }
   ]
 }

@@ -1,5 +1,12 @@
 import type { Goal, Task, Event, WeeklyReview } from "@prisma/client";
 
+type StudyNoteRef = {
+  id: string;
+  title: string;
+  section: string | null;
+  position: number;
+};
+
 export function buildPlanPrompt(context: {
   focusGoals: Goal[];
   allGoals: Goal[];
@@ -9,6 +16,7 @@ export function buildPlanPrompt(context: {
   rangeType: "weekly" | "monthly";
   planStart: string;
   planEnd: string;
+  certStudyNotes?: Map<string, StudyNoteRef[]>;
 }): string {
   const isMonthly = context.rangeType === "monthly";
   const rangeLabel = isMonthly ? "multi-week" : "weekly";
@@ -16,6 +24,40 @@ export function buildPlanPrompt(context: {
   const yearlyGoals = context.allGoals.filter((g) => g.type === "YEARLY");
   const quarterlyGoals = context.allGoals.filter((g) => g.type === "QUARTERLY");
   const monthlyGoals = context.allGoals.filter((g) => g.type === "MONTHLY");
+
+  // Build study notes index section if available
+  const hasStudyNotes = context.certStudyNotes && context.certStudyNotes.size > 0;
+  let studyNotesSection = "";
+  if (hasStudyNotes) {
+    const parts: string[] = [];
+    for (const [goalId, notes] of context.certStudyNotes!) {
+      const goal = context.focusGoals.find((g) => g.id === goalId);
+      if (!goal || notes.length === 0) continue;
+      parts.push(`### Study notes for: ${goal.title}
+These are existing study notes available to link to tasks. Use the studyNoteId field to assign one note per task.
+| # | studyNoteId | Title | Section |
+|---|---|---|---|
+${notes.map((n) => `| ${n.position} | ${n.id} | ${n.title} | ${n.section || "—"} |`).join("\n")}`);
+    }
+    if (parts.length > 0) {
+      studyNotesSection = `\n## Available Study Notes\n${parts.join("\n\n")}`;
+    }
+  }
+
+  // Study note linking instructions
+  const studyNoteLinkingRules = hasStudyNotes
+    ? `
+CRITICAL — Study Note Linking Rules:
+- Create exactly ONE task per day. Do not schedule multiple tasks on the same day.
+- When study notes are available above, assign exactly one studyNoteId per task using the IDs from the table.
+- Each studyNoteId can only be used ONCE across all tasks (one-to-one relationship).
+- Follow the study notes in position order (lower position number = earlier in the plan).
+- If there are more study notes than available days, prioritize notes covering the highest-weighted exam sections.
+- If a study note covers too much for one session, still link it to one task and describe the focus area in the task description.
+- Tasks without a matching study note (e.g. practice test days, review days) should omit studyNoteId or set it to null.`
+    : `
+IMPORTANT — One Task Per Day:
+- Create exactly ONE task per day. Do not schedule multiple tasks on the same day.`;
 
   return `You are an AI life planning assistant. Your job is to create a balanced, achievable ${rangeLabel} plan aligned with the user's goals.
 
@@ -31,6 +73,7 @@ ${context.focusGoals.length === 0
       const indentedNotes = g.notes.split("\n").map((l) => `  ${l}`).join("\n");
       return `${header}\n  Planning Notes:\n${indentedNotes}`;
     }).join("\n\n")}
+${studyNotesSection}
 
 ## Full Goal Hierarchy
 
@@ -65,6 +108,7 @@ ${context.incompleteTasks.map((t) => `- ${t.title} [Priority: ${t.priority}]`).j
 Create a ${rangeLabel} plan with daily tasks from ${context.planStart} to ${context.planEnd}. ${isMonthly ? "Spread tasks across all 4 weeks. For certification exams, ramp up study intensity as exam dates approach. Include rest days and lighter weekends." : "Distribute tasks Monday through Sunday."}
 
 ${context.focusGoals.length > 0 ? `IMPORTANT: The user has selected specific focus goals. Heavily prioritize tasks that advance these goals. At least 70% of tasks should relate to the focus goals.` : ""}
+${studyNoteLinkingRules}
 
 First, provide weeklyGoals — containers that organize tasks into themed weeks:
 - weekKey: Short identifier like "week1", "week2" (used to link tasks)
@@ -81,7 +125,7 @@ For each task, provide:
 - priority: LOW, MEDIUM, HIGH, or CRITICAL
 - scheduledDate: ISO date string (YYYY-MM-DD) — must be within ${context.planStart} to ${context.planEnd}
 - estimatedMinutes: Estimated time in minutes
-- weekKey: The weekKey of the weekly goal this task belongs to
+- weekKey: The weekKey of the weekly goal this task belongs to${hasStudyNotes ? "\n- studyNoteId: The ID of the study note to link to this task (from the Available Study Notes table above), or null if no note applies" : ""}
 
 Also provide:
 - summary: A 2-3 sentence overview of the ${rangeLabel} focus
@@ -90,7 +134,7 @@ Also provide:
 Respond in JSON format:
 {
   "weeklyGoals": [{ "weekKey": "week1", "title": "Week 1 — ...", "description": "...", "startDate": "2026-02-23", "endDate": "2026-03-01", "parentGoalId": "goal_cuid_or_null" }],
-  "tasks": [{ "title": "...", "description": "...", "priority": "MEDIUM", "scheduledDate": "2026-02-24", "estimatedMinutes": 60, "weekKey": "week1" }],
+  "tasks": [{ "title": "...", "description": "...", "priority": "MEDIUM", "scheduledDate": "2026-02-24", "estimatedMinutes": 60, "weekKey": "week1"${hasStudyNotes ? ', "studyNoteId": "note_id_or_null"' : ""} }],
   "summary": "...",
   "focusAreas": ["..."]
 }`;

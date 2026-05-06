@@ -97,7 +97,8 @@
           "hint": "One overrides variables from the parent theme, the other extends with new CSS rules.",
           "topic": "LESS Customization"
         }
-      ]
+      ],
+      "section": "Theme Customization"
     },
     {
       "title": "Day 2 — Translation & i18n",
@@ -189,7 +190,8 @@
           "hint": "Think about what happens when you assign a variable multiple times — the last assignment is what sticks.",
           "topic": "Translation Priority"
         }
-      ]
+      ],
+      "section": "Theme Customization"
     },
     {
       "title": "Day 3 — Layout XML Fundamentals",
@@ -281,7 +283,8 @@
           "hint": "Three specific cache types are affected by layout changes — the layout structure, rendered fragments, and complete pages.",
           "topic": "Cache Management"
         }
-      ]
+      ],
+      "section": "Layout XML & Templates"
     },
     {
       "title": "Day 4 — Layout XML Advanced: Extending vs Overriding",
@@ -373,7 +376,8 @@
           "hint": "The default is wider than you might expect — it includes both sidebars.",
           "topic": "Default Layout"
         }
-      ]
+      ],
+      "section": "Layout XML & Templates"
     },
     {
       "title": "Day 5 — phtml Templates: Creation, Customization & Security",
@@ -459,7 +463,8 @@
           "hint": "Templates use a first-match-wins approach, starting from the most specific theme.",
           "topic": "Template Fallback"
         }
-      ]
+      ],
+      "section": "Layout XML & Templates"
     },
     {
       "title": "Day 6 — Block Architecture & ViewModel Pattern",
@@ -551,7 +556,8 @@
           "hint": "The magic getter converts method names to data keys, bridging the gap between PHP naming and XML naming conventions.",
           "topic": "ViewModel Convention"
         }
-      ]
+      ],
+      "section": "Layout XML & Templates"
     },
     {
       "title": "Day 7 — LESS Architecture & File Structure",
@@ -649,7 +655,8 @@
           "hint": "Variable overrides come after module styles but before extensions, and responsive is always last.",
           "topic": "LESS Architecture"
         }
-      ]
+      ],
+      "section": "Theme Customization"
     },
     {
       "title": "Day 8 — LESS Overriding & Extending Styles",
@@ -747,7 +754,8 @@
           "hint": "The 1px subtraction prevents styles from applying at the same breakpoint in both min and max queries.",
           "topic": "Responsive LESS"
         }
-      ]
+      ],
+      "section": "Theme Customization"
     },
     {
       "title": "Day 9 — RequireJS: Configuration & Modules",
@@ -845,7 +853,8 @@
           "hint": "One swaps the entire module; the other wraps and extends it.",
           "topic": "RequireJS"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 10 — JavaScript Mixins & UI Components",
@@ -943,7 +952,8 @@
           "hint": "One toggles CSS visibility; the other physically adds or removes DOM nodes.",
           "topic": "Knockout.js"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 11 — jQuery Widgets & JS Translations",
@@ -1041,7 +1051,8 @@
           "hint": "Seven steps from code to browser, involving collection, translation, deployment, and runtime lookup.",
           "topic": "JS Translations"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 12 — JavaScript Architecture & Module Best Practices",
@@ -1139,7 +1150,8 @@
           "hint": "The browser handles authentication automatically through cookies, but the URL pattern differs for guests.",
           "topic": "JS Architecture"
         }
-      ]
+      ],
+      "section": "JavaScript & UI Components"
     },
     {
       "title": "Day 13 — Admin Theme Configuration",
@@ -1237,7 +1249,8 @@
           "hint": "There is a checkbox that extends category-level design changes down to the product pages within it.",
           "topic": "Admin Theme Config"
         }
-      ]
+      ],
+      "section": "Page Builder & CMS"
     },
     {
       "title": "Day 14 — Transactional Email Customization",
@@ -1335,7 +1348,8 @@
           "hint": "The path goes through Marketing, not Content or Stores.",
           "topic": "Email Templates"
         }
-      ]
+      ],
+      "section": "Theme Customization"
     },
     {
       "title": "Day 15 — CLI Commands for Frontend Development",
@@ -1433,7 +1447,8 @@
           "hint": "These are JavaScript template files for Knockout.js, not server-side PHP templates.",
           "topic": "CLI Commands"
         }
-      ]
+      ],
+      "section": "Theme Customization"
     },
     {
       "title": "Day 16 — Commerce Cloud CLI & Frontend Tools",
@@ -1531,7 +1546,8 @@
           "hint": "This command starts an entire automated pipeline, not just a file transfer.",
           "topic": "Cloud CLI"
         }
-      ]
+      ],
+      "section": "Theme Customization"
     }
   ]
 }

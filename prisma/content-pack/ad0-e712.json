@@ -97,7 +97,8 @@
           "hint": "Dynamic pricing means the system calculates it — manual entry is blocked.",
           "topic": "Bundle Products"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 2 — Pricing, Promotions & Catalog Price Rules",
@@ -183,7 +184,8 @@
           "hint": "The scope ranges from none, to per-item, to the entire shipment.",
           "topic": "Promotions"
         }
-      ]
+      ],
+      "section": "Merchandising & Marketing"
     },
     {
       "title": "Day 3 — Customer Journey & Order Lifecycle",
@@ -275,7 +277,8 @@
           "hint": "Fee takes away from the refund; Refund adds to it.",
           "topic": "Order Lifecycle"
         }
-      ]
+      ],
+      "section": "Order Management"
     },
     {
       "title": "Day 4 — Store Maintenance & Admin Tools",
@@ -361,7 +364,8 @@
           "hint": "Green, yellow, red — current, in-progress, or stale.",
           "topic": "Indexers"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 5 — Content Management: Pages, Blocks & Widgets",
@@ -447,7 +451,8 @@
           "hint": "Double curly braces with keywords like var, store, if, trans, and template.",
           "topic": "Email Templates"
         }
-      ]
+      ],
+      "section": "Merchandising & Marketing"
     },
     {
       "title": "Day 6 — Layered Navigation, Search & Customers",
@@ -527,7 +532,8 @@
           "hint": "Search terms can be mapped to any destination, not just search results.",
           "topic": "Search"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 7 — Practice Test #1 + Week 1 Review",
@@ -625,7 +631,8 @@
           "hint": "A small number that fits in a side-by-side table layout.",
           "topic": "Customer Journey"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 8 — Shipping Methods & Carriers",
@@ -723,7 +730,8 @@
           "hint": "Home delivery costs more than shipping to a business.",
           "topic": "Real-Time Carriers"
         }
-      ]
+      ],
+      "section": "Order Management"
     },
     {
       "title": "Day 9 — Payment Methods & Processing",
@@ -821,7 +829,8 @@
           "hint": "Auth Only = capture in pieces. Auth+Capture = all at once, no splitting.",
           "topic": "Partial Capture"
         }
-      ]
+      ],
+      "section": "Order Management"
     },
     {
       "title": "Day 10 — Customer Groups, Segments & Account Features",
@@ -913,7 +922,8 @@
           "hint": "Tax = Groups only. Targeting/personalization = Segments.",
           "topic": "Segments vs Groups"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 11 — Adobe Commerce EE vs Open Source Key Differences",
@@ -999,7 +1009,8 @@
           "hint": "Advanced Reporting = both editions. Don't mark it as EE-only on the exam.",
           "topic": "Reporting"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 12 — Hosting Options & Service Add-ons",
@@ -1085,7 +1096,8 @@
           "hint": "Both get Fastly. The real Pro advantages are HA clusters and auto-scaling.",
           "topic": "Cloud Infrastructure"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 13 — SEO Fundamentals in Adobe Commerce",
@@ -1177,7 +1189,8 @@
           "hint": "Same product, different store views, different URL keys — perfect for translations.",
           "topic": "URL Key Scope"
         }
-      ]
+      ],
+      "section": "Merchandising & Marketing"
     },
     {
       "title": "Day 14 — Practice Test #2 + Week 2 Review",
@@ -1269,7 +1282,8 @@
           "hint": "Always subtract the coupon before comparing to the threshold. Post-discount total is what matters.",
           "topic": "Free Shipping Exam Trap"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 15 — Google Analytics, GTM & Email Marketing",
@@ -1367,7 +1381,8 @@
           "hint": "Think about the prerequisite tag that loads the GA4 measurement library",
           "topic": "Google Tag Manager"
         }
-      ]
+      ],
+      "section": "Reporting & Analytics"
     },
     {
       "title": "Day 16 — Shopping Feeds, Social Plugins & eCommerce Features",
@@ -1459,7 +1474,8 @@
           "hint": "Think about authentication requirements and what it does NOT do",
           "topic": "Persistent Shopping Cart"
         }
-      ]
+      ],
+      "section": "Merchandising & Marketing"
     },
     {
       "title": "Day 17 — Privacy Law & Payment Security Basics",
@@ -1551,7 +1567,8 @@
           "hint": "Seven rights — think access, delete, export, correct, restrict, object, inform",
           "topic": "GDPR Rights"
         }
-      ]
+      ],
+      "section": "Order Management"
     },
     {
       "title": "Day 18 — Security Aspects & Accessibility",
@@ -1643,7 +1660,8 @@
           "hint": "Think infrastructure/CDN level, not Magento admin settings",
           "topic": "Admin Security"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 19 — Full Exam Simulation #3",
@@ -1735,7 +1753,8 @@
           "hint": "Four levels from broadest to most specific — the most specific wins",
           "topic": "Store Hierarchy"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     },
     {
       "title": "Day 20 — Weak Area Drill + Final Cheat Sheet",
@@ -1827,7 +1846,8 @@
           "hint": "Think about when the money actually moves — at order time or at invoice time",
           "topic": "Payment Methods"
         }
-      ]
+      ],
+      "section": "Magento Commerce Features & Configuration"
     }
   ]
 }

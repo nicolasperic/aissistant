@@ -92,6 +92,7 @@ export const ad0e724: CertDefinition = {
 
 **Study plan guidelines:**
 - Plan the weeks from start to end date (each week as a weekly goal with daily tasks)
+- ONE study task per day — each day should have a single focused study session linked to one study note
 - Each day with tasks assigned (max 120 min/day, typical 60–90 min)
 - Cover all exam sections proportionally to their weight
 - Include practice test days (take test + review errors + retake)
